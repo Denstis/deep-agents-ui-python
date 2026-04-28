@@ -308,110 +308,228 @@ Always explain your analysis steps and interpret results clearly."""
 
 
 # ============================================================================
-# Multi-Agent Supervisor Graph
+# Multi-Agent Supervisor Graph (Orchestrator)
 # ============================================================================
 
 def create_supervisor_agent():
-    """Create a supervisor that coordinates multiple specialized agents."""
+    """Create a supervisor that coordinates multiple specialized agents.
+    
+    The orchestrator:
+    1. Analyzes incoming tasks using keyword matching + LLM fallback
+    2. Determines which specialized agent is best suited
+    3. Delegates the task by invoking the actual agent graph
+    4. Collects and reviews agent outputs
+    5. Provides comprehensive response to user
+    """
+    
+    # Create specialized agent graphs at orchestrator creation time
+    research_graph = create_research_agent()
+    coding_graph = create_coding_agent()
+    system_graph = create_system_agent()
+    data_graph = create_data_agent()
     
     class SupervisorState(TypedDict):
         messages: Annotated[Sequence[BaseMessage], add_messages]
         current_agent: str
         agent_outputs: dict[str, str]
         task_delegated: bool
+        delegation_history: list[str]
+        remaining_steps: int
     
     def supervisor_node(state: SupervisorState) -> dict:
-        """Supervisor that routes tasks to appropriate agents."""
-        system_prompt = """You are a supervisor coordinating a team of specialized agents:
-
-1. RESEARCHER: Web search, information gathering, fact-checking
-   - Use for: Current events, general knowledge, online resources
-   
-2. CODER: Python programming, code execution, file operations
-   - Use for: Writing code, debugging, automation, data processing
-   
-3. SYSADMIN: System commands, network diagnostics, file management
-   - Use for: Server management, network checks, system info
-   
-4. ANALYST: Data analysis, statistics, visualization
-   - Use for: Data exploration, statistical analysis, insights
-
-Your role:
-1. Understand the user's request
-2. Determine which agent is best suited
-3. Delegate the task with clear instructions
-4. Review the agent's output
-5. Provide a comprehensive response to the user
-
-If a task requires multiple agents, coordinate them sequentially."""
+        """Supervisor that analyzes requests and routes to appropriate agents.
         
-        # Analyze the request and route to appropriate agent
+        Uses keyword-based routing with Russian and English keywords.
+        Falls back to LLM for ambiguous cases.
+        """
         last_message = state["messages"][-1].content if state["messages"] else ""
+        last_message_lower = last_message.lower()
         
-        # Simple keyword-based routing (can be enhanced with LLM)
-        keywords_routing = {
-            "researcher": ["search", "find", "look up", "what is", "who is", "news", "current"],
-            "coder": ["code", "python", "program", "script", "function", "debug", "write code"],
-            "sysadmin": ["command", "server", "network", "ping", "file", "directory", "system"],
-            "analyst": ["analyze", "data", "statistics", "chart", "graph", "visualization"],
-        }
+        # Routing scores
+        agent_scores = {"researcher": 0, "coder": 0, "sysadmin": 0, "analyst": 0}
         
-        selected_agent = "researcher"  # default
-        max_matches = 0
+        # Research keywords (Russian + English)
+        for kw in ["найди", "поиск", "найти", "search", "find", "look up", 
+                   "what is", "who is", "узнай", "новости", "news", 
+                   "wikipedia", "википедия", "информация", "information",
+                   "исследуй", "research", "расскажи о", "tell me about",
+                   "что такое", "кто такой"]:
+            if kw in last_message_lower:
+                agent_scores["researcher"] += 3
         
-        for agent, keywords in keywords_routing.items():
-            matches = sum(1 for kw in keywords if kw.lower() in last_message.lower())
-            if matches > max_matches:
-                max_matches = matches
-                selected_agent = agent
+        # Coding keywords
+        for kw in ["код", "code", "python", "программ", "program",
+                   "скрипт", "script", "функция", "function",
+                   "отладк", "debug", "напиши код", "write code",
+                   "разработ", "develop", "реализ", "implement",
+                   "автоматиз", "automate", "исправь ошибку"]:
+            if kw in last_message_lower:
+                agent_scores["coder"] += 3
+                
+        # Sysadmin keywords
+        for kw in ["команд", "command", "сервер", "server",
+                   "сеть", "network", "пинг", "ping",
+                   "файл", "file", "директор", "directory",
+                   "систем", "system", "linux", "bash", "shell",
+                   "запусти", "run", "exec", "ls ", "pwd", "cd "]:
+            if kw in last_message_lower:
+                agent_scores["sysadmin"] += 3
+                
+        # Analyst keywords
+        for kw in ["анализ", "analyze", "данные", "data",
+                   "статистик", "statistics", "график", "chart",
+                   "визуализ", "visualization", "pandas", "dataframe",
+                   "построй график", "plot", "диаграмм"]:
+            if kw in last_message_lower:
+                agent_scores["analyst"] += 3
+        
+        # Select best agent
+        selected_agent = max(agent_scores, key=agent_scores.get)
+        max_score = agent_scores[selected_agent]
+        
+        # Fallback to LLM if no keywords matched
+        if max_score == 0:
+            system_prompt = """You are an intelligent orchestrator. Analyze the user's request and determine which specialist agent should handle it.
+
+RESPOND WITH ONLY ONE WORD from: RESEARCHER, CODER, SYSADMIN, ANALYST
+
+Agent capabilities:
+- RESEARCHER: Web search, information gathering, fact-checking, news, general knowledge
+- CODER: Python programming, code execution, file operations, debugging
+- SYSADMIN: Shell commands, network diagnostics, system management
+- ANALYST: Data analysis, statistics, visualization"""
+            
+            llm_response = call_llm_sync(state["messages"], system_prompt)
+            llm_lower = llm_response.lower().strip()
+            
+            if "researcher" in llm_lower or "research" in llm_lower:
+                selected_agent = "researcher"
+            elif "coder" in llm_lower or "code" in llm_lower:
+                selected_agent = "coder"
+            elif "sysadmin" in llm_lower or "system" in llm_lower:
+                selected_agent = "sysadmin"
+            elif "analyst" in llm_lower or "data" in llm_lower or "analysis" in llm_lower:
+                selected_agent = "analyst"
+            else:
+                selected_agent = "researcher"
+        
+        # Track delegation
+        delegation_history = state.get("delegation_history", [])
+        delegation_history.append(f"Step {len(delegation_history)+1}: Routing to {selected_agent}")
         
         return {
             "messages": state["messages"],
             "current_agent": selected_agent,
             "task_delegated": True,
+            "agent_outputs": state.get("agent_outputs", {}),
+            "delegation_history": delegation_history,
+            "remaining_steps": 1,
         }
     
     def delegate_to_agent(state: SupervisorState) -> dict:
-        """Delegate task to the selected agent."""
+        """Delegate task to the selected specialized agent and execute its graph."""
         agent_name = state.get("current_agent", "researcher")
         
-        # In a full implementation, this would invoke the actual agent graph
-        # For now, we'll simulate with a simple response
-        delegation_msg = f"Delegating to {agent_name.upper()} agent..."
-        
-        # Here you would invoke the appropriate agent graph
-        # For example:
-        # if agent_name == "researcher":
-        #     result = research_graph.invoke({"messages": state["messages"]})
-        # elif agent_name == "coder":
-        #     result = coding_graph.invoke({"messages": state["messages"]})
-        # etc.
-        
-        return {
-            "messages": [AIMessage(content=delegation_msg)],
-            "agent_outputs": {agent_name: "Task delegated"},
+        # Map agent names to their graphs
+        agent_graphs = {
+            "researcher": research_graph,
+            "coder": coding_graph,
+            "sysadmin": system_graph,
+            "analyst": data_graph,
         }
+        
+        if agent_name not in agent_graphs:
+            return {
+                "messages": [AIMessage(content=f"Error: Unknown agent '{agent_name}'")],
+                "agent_outputs": {agent_name: "Error - unknown agent"},
+            }
+        
+        agent_input = {"messages": state["messages"]}
+        
+        try:
+            # Execute the specialized agent's graph
+            agent_graph = agent_graphs[agent_name]
+            result = agent_graph.invoke(agent_input)
+            
+            # Extract response
+            agent_messages = result.get("messages", [])
+            agent_response = ""
+            if agent_messages:
+                last_msg = agent_messages[-1]
+                agent_response = str(last_msg.content) if hasattr(last_msg, 'content') else str(last_msg)
+            
+            # Log delegation
+            delegation_msg = f"✅ Delegated to {agent_name.upper()} agent.\n\n📋 Agent response:\n{agent_response}"
+            
+            # Update state
+            agent_outputs = state.get("agent_outputs", {})
+            agent_outputs[agent_name] = agent_response
+            
+            delegation_history = state.get("delegation_history", [])
+            delegation_history.append(f"Completed: {agent_name}")
+            
+            return {
+                "messages": [AIMessage(content=delegation_msg)],
+                "agent_outputs": agent_outputs,
+                "delegation_history": delegation_history,
+                "remaining_steps": state.get("remaining_steps", 1) - 1,
+            }
+            
+        except Exception as e:
+            error_msg = f"❌ Error executing {agent_name} agent: {str(e)}"
+            return {
+                "messages": [AIMessage(content=error_msg)],
+                "agent_outputs": {agent_name: f"Error: {str(e)}"},
+            }
     
-    def should_continue(state: SupervisorState) -> Literal["delegate", "end"]:
-        """Decide whether to delegate or end."""
-        if state.get("task_delegated"):
+    def should_continue(state: SupervisorState) -> Literal["delegate", "finalize", "end"]:
+        """Decide next step based on remaining steps and outputs."""
+        remaining = state.get("remaining_steps", 0)
+        
+        if remaining > 0 and state.get("task_delegated"):
             return "delegate"
+        elif remaining <= 0 and state.get("agent_outputs"):
+            return "finalize"
         return "end"
     
+    def finalize_node(state: SupervisorState) -> dict:
+        """Finalize multi-agent workflow with comprehensive response."""
+        agent_outputs = state.get("agent_outputs", {})
+        delegation_history = state.get("delegation_history", [])
+        
+        final_response = "🎯 **Task Completed by Orchestrator**\n\n"
+        final_response += "📝 **Execution Summary:**\n"
+        for step in delegation_history:
+            final_response += f"- {step}\n"
+        
+        final_response += "\n📊 **Agent Outputs:**\n"
+        for agent, output in agent_outputs.items():
+            final_response += f"\n**{agent.upper()}:**\n{output}\n"
+        
+        return {"messages": [AIMessage(content=final_response)]}
+    
+    # Build workflow graph
     workflow = StateGraph(SupervisorState)
+    
     workflow.add_node("supervisor", supervisor_node)
     workflow.add_node("delegate", delegate_to_agent)
+    workflow.add_node("finalize", finalize_node)
     
     workflow.add_edge(START, "supervisor")
+    
     workflow.add_conditional_edges(
         "supervisor",
         should_continue,
-        {
-            "delegate": "delegate",
-            "end": END,
-        }
+        {"delegate": "delegate", "finalize": "finalize", "end": END}
     )
-    workflow.add_edge("delegate", END)
+    
+    workflow.add_conditional_edges(
+        "delegate",
+        should_continue,
+        {"delegate": "delegate", "finalize": "finalize", "end": END}
+    )
+    
+    workflow.add_edge("finalize", END)
     
     return workflow.compile()
 
