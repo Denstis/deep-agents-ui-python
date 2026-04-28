@@ -73,21 +73,23 @@ echo.
 
 REM Check if LM Studio is running
 echo Checking LM Studio connection...
-powershell -Command "$ProgressPreference = 'SilentlyContinue'; try { $response = Invoke-WebRequest -Uri 'http://localhost:1234/v1/models' -TimeoutSec 3 -ErrorAction Stop; Write-Host '[OK] LM Studio is running on http://localhost:1234' } catch { Write-Host '[WARNING] LM Studio is NOT running on http://localhost:1234'; Write-Host 'Please start LM Studio and load a model first!' }"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:1234/v1/models' -TimeoutSec 3 -ErrorAction Stop; Write-Host '[OK] LM Studio is running' } catch { Write-Host '[WARNING] LM Studio not detected' }"
 echo.
 
 REM Start LangGraph local server in a separate window
 echo [6/6] Starting LangGraph local server...
 where langgraph >nul 2>&1
-if %errorlevel% equ 0 (
+set "LANGGRAPH_FOUND=%errorlevel%"
+
+if "!LANGGRAPH_FOUND!" equ "0" (
     echo [INFO] langgraph-cli detected. Starting LangGraph dev server on port 6000...
-    echo.
-    REM Start in new window with proper path activation and redirect output to log
-    start "LangGraph Server" cmd /c "cd /d %~dp0 && call venv\Scripts\activate.bat && chcp 65001 >nul && langgraph dev --port 6000 --host 127.0.0.1 --no-browser > langgraph.log 2>&1"
+    
+    REM Start in new window - simplified and robust
+    start "LangGraph Server" cmd /k "cd /d %~dp0 && call venv\Scripts\activate.bat && chcp 65001 >nul && langgraph dev --port 6000 --host 127.0.0.1 --no-browser"
     
     echo [WAIT] Waiting for LangGraph to initialize on port 6000...
     
-    REM Wait for port 6000 to be available (up to 30 seconds)
+    REM Wait for port 6000 with pure CMD (no PowerShell parsing issues)
     set /a max_attempts=15
     set /a attempt=0
     :wait_loop
@@ -100,20 +102,17 @@ if %errorlevel% equ 0 (
     )
     if !attempt! geq !max_attempts! (
         echo [WARN] LangGraph startup timeout after !attempt! attempts.
-        echo Check langgraph.log file for errors.
+        echo Check the LangGraph Server window for errors.
         goto :langgraph_ready
     )
     goto :wait_loop
-    
-    :langgraph_ready
 ) else (
-    echo [ERROR] langgraph command not found even after installation.
-    echo Please check the installation logs above.
-    echo The app will start but you may need to use a cloud LangGraph deployment.
-    timeout /t 3 >nul
+    echo [WARN] langgraph-cli not found. Skipping local server start.
+    echo You can use cloud LangGraph deployment instead.
 )
-echo.
 
+:langgraph_ready
+echo.
 echo Starting Deep Agents UI server...
 echo.
 echo Open http://localhost:8000 in your browser
@@ -123,7 +122,7 @@ echo   - LangGraph URL: http://localhost:6000
 echo   - LM Studio URL: http://localhost:1234
 echo.
 echo Press Ctrl+C to stop the UI server.
-echo (The LangGraph server window will remain open - close it separately)
+echo (Close the 'LangGraph Server' window separately to stop it)
 echo ============================================
 echo.
 
