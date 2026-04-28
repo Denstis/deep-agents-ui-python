@@ -82,7 +82,7 @@ if %errorlevel% equ 0 (
     echo [INFO] langgraph-cli detected. Starting LangGraph dev server on port 6000...
     echo.
     REM Start in new window with proper path activation and redirect output to log
-    start "LangGraph Server" cmd /c "cd /d %~dp0 && call venv\Scripts\activate.bat && langgraph dev --port 6000 --host 127.0.0.1 --no-browser > langgraph.log 2>&1"
+    start "LangGraph Server" cmd /c "cd /d %~dp0 && call venv\Scripts\activate.bat && chcp 65001 >nul && langgraph dev --port 6000 --host 127.0.0.1 --no-browser > langgraph.log 2>&1"
     
     echo [WAIT] Waiting for LangGraph to initialize on port 6000...
     
