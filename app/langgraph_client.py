@@ -99,9 +99,10 @@ class LangGraphClientWrapper:
         if interrupt_after:
             stream_params["interrupt_after"] = interrupt_after
         
-        async with self.client.runs.stream(**stream_params) as stream:
-            async for event in stream:
-                yield event
+        # Use the async generator directly instead of async with
+        stream = self.client.runs.stream(**stream_params)
+        async for event in stream:
+            yield event
     
     async def submit_run(
         self,
