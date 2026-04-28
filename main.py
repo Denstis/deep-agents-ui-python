@@ -262,19 +262,29 @@ async def stream_run(request: Request, stream_req: StreamRequest):
     
     client = app_state.get_or_create_client(session_id, config)
     
+    print(f"🚀 Starting stream for thread {stream_req.thread_id}, message: {stream_req.message[:50] if stream_req.message else 'None'}...")
+    
     async def event_generator() -> AsyncGenerator[dict[str, Any], None]:
-        async for event in client.stream_thread(
-            thread_id=stream_req.thread_id,
-            assistant_id=config.assistant_id,
-            input_data={"messages": [{"type": "human", "content": stream_req.message}]} if stream_req.message else None,
-            config=stream_req.config,
-            checkpoint=stream_req.checkpoint,
-            interrupt_before=stream_req.interrupt_before,
-            interrupt_after=stream_req.interrupt_after,
-        ):
+        try:
+            async for event in client.stream_thread(
+                thread_id=stream_req.thread_id,
+                assistant_id=config.assistant_id,
+                input_data={"messages": [{"type": "human", "content": stream_req.message}]} if stream_req.message else None,
+                config=stream_req.config,
+                checkpoint=stream_req.checkpoint,
+                interrupt_before=stream_req.interrupt_before,
+                interrupt_after=stream_req.interrupt_after,
+            ):
+                print(f"📤 Yielding event: {event.get('event', 'unknown')}")
+                yield {
+                    "event": "message",
+                    "data": json.dumps(event, default=str),
+                }
+        except Exception as e:
+            print(f"❌ Stream generator error: {e}")
             yield {
-                "event": "message",
-                "data": json.dumps(event, default=str),
+                "event": "error",
+                "data": json.dumps({"error": str(e)}, default=str),
             }
     
     return EventSourceResponse(event_generator())

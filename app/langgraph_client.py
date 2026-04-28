@@ -100,9 +100,18 @@ class LangGraphClientWrapper:
             stream_params["interrupt_after"] = interrupt_after
         
         # Use the async generator directly instead of async with
-        stream = self.client.runs.stream(**stream_params)
-        async for event in stream:
-            yield event
+        print(f"🔄 Starting stream for thread {thread_id} with params: {stream_params}")
+        try:
+            stream = self.client.runs.stream(**stream_params)
+            event_count = 0
+            async for event in stream:
+                event_count += 1
+                print(f"📩 Stream event #{event_count}: {event.get('event', 'unknown')} - {str(event)[:200]}")
+                yield event
+            print(f"✅ Stream completed with {event_count} events")
+        except Exception as e:
+            print(f"❌ Stream error: {e}")
+            yield {"event": "error", "data": {"error": str(e)}}
     
     async def submit_run(
         self,
