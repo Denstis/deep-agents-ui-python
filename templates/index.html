@@ -554,12 +554,12 @@
                                 console.log('📥 Data type:', typeof data, 'Value:', data);
                                 // Handle different event types based on SSE event field
                                 // Check if this is a message-related event that contains content
-                                const isMessageEvent = currentEvent === 'messages' || 
-                                                       currentEvent === 'messages/complete' || 
-                                                       currentEvent === 'messages/metadata' ||
-                                                       currentEvent === 'values' || 
-                                                       currentEvent === 'updates' ||
-                                                       currentEvent === 'message';
+                                const isMessageEvent = currentEvent === 'messages' ||
+                                    currentEvent === 'messages/complete' ||
+                                    currentEvent === 'messages/metadata' ||
+                                    currentEvent === 'values' ||
+                                    currentEvent === 'updates' ||
+                                    currentEvent === 'message';
                                 console.log('🔍 Is message event?', isMessageEvent, 'Current event:', currentEvent);
                                 if (isMessageEvent) {
                                     console.log('🔍 Processing event type:', currentEvent, 'with data:', data);

@@ -1,1 +1,1 @@
-(empty)
+Nothing needs to be added to .gitignore since the changes only include source files (.py, .html) without any build artifacts, dependencies, or temporary files.

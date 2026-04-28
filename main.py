@@ -299,7 +299,10 @@ async def stream_run(request: Request, stream_req: StreamRequest):
                 "data": json.dumps({"error": str(e)}, default=str),
             }
     
-    return EventSourceResponse(event_generator())
+    return EventSourceResponse(
+        event_generator(),
+        headers={"Content-Type": "text/event-stream; charset=utf-8"},
+    )
 
 
 @app.post("/api/runs")
