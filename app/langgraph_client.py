@@ -5,14 +5,22 @@ import httpx
 from langgraph_sdk import get_client
 
 
+def normalize_url(url: str) -> str:
+    """Ensure URL has http:// or https:// prefix."""
+    url = url.strip()
+    if not url.startswith(("http://", "https://")):
+        url = f"http://{url}"
+    return url
+
+
 class LangGraphClientWrapper:
     """Wrapper around LangGraph SDK client for async operations."""
     
     def __init__(self, deployment_url: str, api_key: Optional[str] = None):
-        self.deployment_url = deployment_url
+        self.deployment_url = normalize_url(deployment_url)
         self.api_key = api_key
         self.client = get_client(
-            url=deployment_url,
+            url=self.deployment_url,
             api_key=api_key,
         )
     

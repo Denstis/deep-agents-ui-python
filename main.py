@@ -3,8 +3,13 @@
 import os
 import uuid
 import json
+from pathlib import Path
 from typing import Optional, Any, AsyncGenerator
 from contextlib import asynccontextmanager
+
+# Ensure required directories exist
+Path("static").mkdir(exist_ok=True)
+Path("templates").mkdir(exist_ok=True)
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
