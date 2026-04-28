@@ -154,34 +154,34 @@ async def list_agents():
     """Get list of available agents with their descriptions and tools."""
     agents = {
         "orchestrator": {
-            "name": "Оркестратор (Supervisor)",
-            "description": "Координирует работу специализированных агентов, распределяет задачи между ними",
+            "name": "Orchestrator (Supervisor)",
+            "description": "Coordinates specialized agents, distributes tasks between them",
             "tools": ["route_tasks", "coordinate_agents", "review_outputs"],
             "default": True
         },
         "research": {
-            "name": "Исследователь (Research)",
-            "description": "Поиск информации в интернете, сбор данных, проверка фактов",
+            "name": "Research Agent",
+            "description": "Web search, information gathering, fact-checking",
             "tools": ["web_search", "duckduckgo_search", "fetch_url"]
         },
         "coding": {
-            "name": "Разработчик (Coding)",
-            "description": "Написание и выполнение Python кода, работа с файлами",
+            "name": "Coding Agent",
+            "description": "Python code writing and execution, file operations",
             "tools": ["execute_python", "read_file", "write_file", "list_directory", "install_package"]
         },
         "system": {
-            "name": "Системный администратор (System)",
-            "description": "Выполнение команд оболочки, сетевая диагностика, управление файлами",
+            "name": "System Agent",
+            "description": "Shell command execution, network diagnostics, file management",
             "tools": ["execute_command", "run_python_script", "ping_host", "port_scan", "get_network_info"]
         },
         "data": {
-            "name": "Аналитик данных (Data)",
-            "description": "Анализ данных, статистика, визуализация",
+            "name": "Data Analyst Agent",
+            "description": "Data analysis, statistics, visualization",
             "tools": ["execute_python", "read_file", "write_file", "pandas", "matplotlib"]
         },
         "universal": {
-            "name": "Универсальный (Universal)",
-            "description": "Агент со всеми доступными инструментами для любых задач",
+            "name": "Universal Agent",
+            "description": "Agent with all available tools for any task",
             "tools": ["web_search", "execute_python", "execute_command", "read_file", "write_file", "pip_tools", "network_tools"]
         }
     }

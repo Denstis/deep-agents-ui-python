@@ -6,7 +6,7 @@
     "coding": "./app/graphs.py:create_coding_agent",
     "system": "./app/graphs.py:create_system_agent",
     "data": "./app/graphs.py:create_data_agent",
-    "supervisor": "./app/graphs.py:create_supervisor_agent",
+    "orchestrator": "./app/graphs.py:create_supervisor_agent",
     "universal": "./app/graphs.py:create_universal_agent"
   },
   "env": ".env"
