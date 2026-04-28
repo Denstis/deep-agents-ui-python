@@ -644,6 +644,7 @@
                                 // Check if this is a message-related event that contains content
                                 const isMessageEvent = currentEvent === 'messages' || 
                                                        currentEvent === 'messages/complete' || 
+                                                       currentEvent === 'messages/metadata' ||
                                                        currentEvent === 'values' || 
                                                        currentEvent === 'updates' ||
                                                        currentEvent === 'message';
@@ -663,11 +664,7 @@
                                     console.error('❌ Server error:', data);
                                 } else {
                                     // Log metadata and other non-message events without showing warning
-                                    if (currentEvent === 'metadata' || currentEvent === 'messages/metadata') {
-                                        console.log('ℹ️ Metadata event:', currentEvent, '- Data:', data);
-                                    } else {
-                                        console.log('⚠️ Unknown event type:', currentEvent, '- Data:', data);
-                                    }
+                                    console.log('ℹ️ Other event:', currentEvent, '- Data:', data);
                                 }
                             } catch (e) {
                                 console.error('Failed to parse SSE data:', line, e);
@@ -736,6 +733,7 @@
                     // Find the last AI message
                     for (let i = parsed.messages.length - 1; i >= 0; i--) {
                         const msg = parsed.messages[i];
+                        console.log('🔍 Checking message at index', i, ':', msg);
                         if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
                             console.log('✅ Found AI message content in messages array');
                             return typeof msg.content === 'string' 
@@ -743,14 +741,9 @@
                                 : JSON.stringify(msg.content);
                         }
                     }
-                    // Fallback to last message with content
-                    const lastMsg = parsed.messages[parsed.messages.length - 1];
-                    if (lastMsg && lastMsg.content) {
-                        console.log('✅ Found content in messages array (fallback)');
-                        return typeof lastMsg.content === 'string' 
-                            ? lastMsg.content 
-                            : JSON.stringify(lastMsg.content);
-                    }
+                    // No AI message found - return null to avoid showing user's own message
+                    console.log('⚠️ No AI message found in messages array, skipping');
+                    return null;
                 }
                 
                 // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
@@ -759,6 +752,7 @@
                     console.log('🔍 Checking for nested messages in object keys');
                     for (const key of Object.keys(parsed)) {
                         const nested = parsed[key];
+                        console.log(`  🔍 Key '${key}':`, typeof nested, nested?.constructor?.name);
                         if (nested && typeof nested === 'object') {
                             // Check if nested object has messages array
                             if (nested.messages && Array.isArray(nested.messages)) {
@@ -766,19 +760,16 @@
                                 // Find the last AI message
                                 for (let i = nested.messages.length - 1; i >= 0; i--) {
                                     const msg = nested.messages[i];
+                                    console.log(`    🔍 Message ${i}: type=${msg.type}, content=${msg.content ? msg.content.substring(0, 50) : 'null'}`);
                                     if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
                                         return typeof msg.content === 'string' 
                                             ? msg.content 
                                             : JSON.stringify(msg.content);
                                     }
                                 }
-                                // Fallback to last message with content
-                                const lastMsg = nested.messages[nested.messages.length - 1];
-                                if (lastMsg && lastMsg.content) {
-                                    return typeof lastMsg.content === 'string' 
-                                        ? lastMsg.content 
-                                        : JSON.stringify(lastMsg.content);
-                                }
+                                // No AI message found - return null to avoid showing user's own message
+                                console.log('⚠️ No AI message found in nested messages, skipping');
+                                return null;
                             }
                         }
                     }
