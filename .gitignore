@@ -4,48 +4,30 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
+
+# Logs
 *.log
-.pytest_cache/
-.mypy_cache/
-.hypothesis/
 
 # Environment
 .env
 .env.local
 *.env.*
 
-# Build artifacts
-build/
-dist/
-*.egg-info/
-.installed.cfg
-*.egg
+# Dependencies
+.venv/
+venv/
+node_modules/
 
 # Editors
 .vscode/
 .idea/
-*.swp
-*.swo
-*.tmp
 
-# OS
-.DS_Store
-Thumbs.db
+# Build artifacts
+dist/
+build/
+target/
 
-# Coverage
-coverage/
-htmlcov/
+# Cache
+.mypy_cache/
+.pytest_cache/
 ```
