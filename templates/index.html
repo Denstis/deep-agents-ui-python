@@ -630,8 +630,8 @@
                                 // Debug logging
                                 console.log('📥 SSE Event:', data.event, data);
                                 
-                                // Handle different event types
-                                if (data.event === 'messages' || data.event === 'values') {
+                                // Handle different event types (including 'messages/complete', 'messages', 'values', 'updates')
+                                if (data.event === 'messages' || data.event === 'messages/complete' || data.event === 'values' || data.event === 'updates') {
                                     const content = extractMessageContent(data.data);
                                     if (content) {
                                         fullContent += content;
@@ -670,9 +670,10 @@
             console.log('🔍 Extracting content from:', typeof data === 'string' ? data.substring(0, 200) : data);
             
             try {
+                // Handle string data - parse JSON
                 const parsed = typeof data === 'string' ? JSON.parse(data) : data;
                 
-                // Handle nested data structure from SSE
+                // Handle nested data structure from SSE (double-wrapped)
                 if (parsed.data && typeof parsed.data === 'string') {
                     try {
                         const innerData = JSON.parse(parsed.data);
@@ -682,7 +683,26 @@
                     }
                 }
                 
-                // Handle different message formats
+                // Handle array of messages (e.g., from 'messages/complete' event)
+                if (Array.isArray(parsed)) {
+                    console.log('📦 Detected array of messages, length:', parsed.length);
+                    // Get the last AI message from the array
+                    for (let i = parsed.length - 1; i >= 0; i--) {
+                        const msg = parsed[i];
+                        if (msg.content && (!msg.type || msg.type === 'ai')) {
+                            const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+                            console.log('✅ Found AI message content:', content.substring(0, 100));
+                            return content;
+                        }
+                    }
+                    // Fallback: just get the last item with content
+                    const lastMsg = parsed[parsed.length - 1];
+                    if (lastMsg && lastMsg.content) {
+                        return typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
+                    }
+                }
+                
+                // Handle object with messages array
                 if (parsed.messages && Array.isArray(parsed.messages)) {
                     const lastMsg = parsed.messages[parsed.messages.length - 1];
                     if (lastMsg.content) {
@@ -692,23 +712,43 @@
                     }
                 }
                 
-                // Handle AIMessage format
+                // Handle AIMessage format directly
                 if (parsed.id && parsed.content && parsed.type === 'ai') {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
                 }
                 
-                // Handle nested messages in data object
-                if (parsed.data && parsed.data.messages && Array.isArray(parsed.data.messages)) {
-                    const lastMsg = parsed.data.messages[parsed.data.messages.length - 1];
-                    if (lastMsg && lastMsg.content) {
-                        return typeof lastMsg.content === 'string' 
-                            ? lastMsg.content 
-                            : JSON.stringify(lastMsg.content);
+                // Handle nested messages in data object (e.g., updates: {agent: {messages: [...]}})
+                if (parsed.data) {
+                    // Check if data contains nested structures like {agent: {messages: [...]}}
+                    const dataObj = parsed.data;
+                    if (typeof dataObj === 'object') {
+                        // Try to find messages in any nested key
+                        for (const key of Object.keys(dataObj)) {
+                            const nested = dataObj[key];
+                            if (nested && nested.messages && Array.isArray(nested.messages)) {
+                                const lastMsg = nested.messages[nested.messages.length - 1];
+                                if (lastMsg && lastMsg.content) {
+                                    return typeof lastMsg.content === 'string' 
+                                        ? lastMsg.content 
+                                        : JSON.stringify(lastMsg.content);
+                                }
+                            }
+                        }
+                        // Also check if data itself has messages array
+                        if (dataObj.messages && Array.isArray(dataObj.messages)) {
+                            const lastMsg = dataObj.messages[dataObj.messages.length - 1];
+                            if (lastMsg && lastMsg.content) {
+                                return typeof lastMsg.content === 'string' 
+                                    ? lastMsg.content 
+                                    : JSON.stringify(lastMsg.content);
+                            }
+                        }
                     }
                 }
                 
+                // Direct content property
                 if (parsed.content) {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
