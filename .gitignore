@@ -1,8 +1,1 @@
-```
-# LangGraph checkpoints and state
-.langgraph_api/.langgraph_checkpoint*.pckl
-.langgraph_api/.langgraph_ops.pckl
-.langgraph_api/.langgraph_retry_counter.pckl
-.langgraph_api/store.pckl
-.langgraph_api/store.vectors.pckl
-```
+Nothing needs to be added to .gitignore since only a source file (.bat) was modified and there are no build artifacts, dependencies, or temporary files in the changes.
