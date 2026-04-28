@@ -19,10 +19,11 @@ class LangGraphClientWrapper:
     def __init__(self, deployment_url: str, api_key: Optional[str] = None):
         self.deployment_url = normalize_url(deployment_url)
         self.api_key = api_key
-        self.client = get_client(
-            url=self.deployment_url,
-            api_key=api_key,
-        )
+        # Only pass api_key if it's provided and not empty
+        client_kwargs = {"url": self.deployment_url}
+        if api_key and api_key.strip():
+            client_kwargs["api_key"] = api_key
+        self.client = get_client(**client_kwargs)
     
     async def get_assistant(self, assistant_id: str) -> dict[str, Any]:
         """Get assistant by ID."""
