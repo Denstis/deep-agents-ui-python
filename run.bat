@@ -72,7 +72,7 @@ echo.
 
 REM Check if LM Studio is running
 echo Checking LM Studio connection...
-powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:1234/v1/models' -TimeoutSec 3 -ErrorAction Stop; Write-Host '[OK] LM Studio is running on http://localhost:1234' } catch { Write-Host '[WARNING] LM Studio is NOT running on http://localhost:1234' -ForegroundColor Yellow; Write-Host 'Please start LM Studio and load a model first!' }"
+powershell -Command "$ProgressPreference = 'SilentlyContinue'; try { $response = Invoke-WebRequest -Uri 'http://localhost:1234/v1/models' -TimeoutSec 3 -ErrorAction Stop; Write-Host '[OK] LM Studio is running on http://localhost:1234' } catch { Write-Host '[WARNING] LM Studio is NOT running on http://localhost:1234'; Write-Host 'Please start LM Studio and load a model first!' }"
 echo.
 
 REM Start LangGraph local server in a separate window
@@ -92,7 +92,7 @@ if %errorlevel% equ 0 (
     :wait_loop
     set /a attempt+=1
     timeout /t 2 /nobreak >nul
-    powershell -Command "$tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if($tcp.Connected) { exit 0 } else { exit 1 } } catch { exit 1 }"
+    powershell -Command "$ProgressPreference = 'SilentlyContinue'; $tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if($tcp.Connected) { exit 0 } else { exit 1 } } catch { exit 1 }"
     if %errorlevel% equ 0 (
         echo [OK] LangGraph is ready on http://127.0.0.1:6000
         goto :langgraph_ready
