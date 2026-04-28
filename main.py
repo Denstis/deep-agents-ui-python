@@ -281,10 +281,10 @@ async def stream_run(request: Request, stream_req: StreamRequest):
                 print(f"📤 Yielding event: {event_type}")
                 print(f"   Event data type: {type(event_data).__name__}")
                 
-                # Send event with proper structure - EventSourceResponse will handle JSON serialization
+                # Explicitly serialize to JSON string for proper SSE format
                 yield {
                     "event": event_type,
-                    "data": event_data,
+                    "data": json.dumps(event_data, default=str, ensure_ascii=False),
                 }
         except Exception as e:
             print(f"❌ Stream generator error: {e}")

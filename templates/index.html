@@ -676,20 +676,11 @@
 
         function extractMessageContent(data) {
             console.log('🔍 Extracting content from:', typeof data === 'string' ? data.substring(0, 200) : data);
+            console.log('🔍 Data constructor:', data?.constructor?.name);
             
             try {
-                // Handle string data - parse JSON
-                const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-                
-                // Handle nested data structure from SSE (double-wrapped)
-                if (parsed.data && typeof parsed.data === 'string') {
-                    try {
-                        const innerData = JSON.parse(parsed.data);
-                        return extractMessageContent(innerData);
-                    } catch (e) {
-                        // If inner parse fails, continue with original parsed data
-                    }
-                }
+                // Data is already parsed by EventSourceResponse - no need to JSON.parse()
+                const parsed = data;
                 
                 // Handle array of messages (e.g., from 'messages/complete' event)
                 if (Array.isArray(parsed)) {
