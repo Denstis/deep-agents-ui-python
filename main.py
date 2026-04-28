@@ -275,15 +275,16 @@ async def stream_run(request: Request, stream_req: StreamRequest):
                 interrupt_before=stream_req.interrupt_before,
                 interrupt_after=stream_req.interrupt_after,
             ):
-                print(f"📤 Yielding event: {event.get('event', 'unknown')}")
-                # Ensure data is properly serialized
-                event_data = event.get("data", event)
+                event_type = event.get('event', 'unknown')
+                event_data = event.get('data', event)
+                
+                print(f"📤 Yielding event: {event_type}")
+                print(f"   Event data type: {type(event_data).__name__}")
+                
+                # Send event with proper structure - EventSourceResponse will handle JSON serialization
                 yield {
-                    "event": "message",
-                    "data": json.dumps({
-                        "event": event.get("event", "unknown"),
-                        "data": event_data,
-                    }, default=str),
+                    "event": event_type,
+                    "data": event_data,
                 }
         except Exception as e:
             print(f"❌ Stream generator error: {e}")
