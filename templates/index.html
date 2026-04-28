@@ -712,17 +712,19 @@
                         const msg = parsed[i];
                         console.log('🔍 Checking message', i, ':', msg);
                         console.log('🔍 Message type:', msg?.type, 'has content:', !!msg?.content);
-                        if (msg.content && (!msg.type || msg.type === 'ai')) {
+                        if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
                             const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
                             console.log('✅ Found AI message content:', content.substring(0, 100));
                             return content;
                         }
                     }
-                    // Fallback: just get the last item with content
-                    const lastMsg = parsed[parsed.length - 1];
-                    if (lastMsg && lastMsg.content) {
-                        console.log('⚠️ Fallback: using last message with content');
-                        return typeof lastMsg.content === 'string' ? lastMsg.content : JSON.stringify(lastMsg.content);
+                    // Fallback: just get the last item with content (regardless of type)
+                    for (let i = parsed.length - 1; i >= 0; i--) {
+                        const msg = parsed[i];
+                        if (msg && msg.content) {
+                            console.log('⚠️ Fallback: using last message with content');
+                            return typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+                        }
                     }
                     console.log('❌ No content found in array');
                     return null;
@@ -731,9 +733,20 @@
                 // Handle object with messages array (e.g., from 'values' event: {messages: [...]})
                 if (parsed.messages && Array.isArray(parsed.messages)) {
                     console.log('📦 Detected object with messages array');
+                    // Find the last AI message
+                    for (let i = parsed.messages.length - 1; i >= 0; i--) {
+                        const msg = parsed.messages[i];
+                        if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                            console.log('✅ Found AI message content in messages array');
+                            return typeof msg.content === 'string' 
+                                ? msg.content 
+                                : JSON.stringify(msg.content);
+                        }
+                    }
+                    // Fallback to last message with content
                     const lastMsg = parsed.messages[parsed.messages.length - 1];
                     if (lastMsg && lastMsg.content) {
-                        console.log('✅ Found content in messages array');
+                        console.log('✅ Found content in messages array (fallback)');
                         return typeof lastMsg.content === 'string' 
                             ? lastMsg.content 
                             : JSON.stringify(lastMsg.content);
@@ -750,6 +763,16 @@
                             // Check if nested object has messages array
                             if (nested.messages && Array.isArray(nested.messages)) {
                                 console.log(`📦 Found messages in key '${key}'`);
+                                // Find the last AI message
+                                for (let i = nested.messages.length - 1; i >= 0; i--) {
+                                    const msg = nested.messages[i];
+                                    if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                        return typeof msg.content === 'string' 
+                                            ? msg.content 
+                                            : JSON.stringify(msg.content);
+                                    }
+                                }
+                                // Fallback to last message with content
                                 const lastMsg = nested.messages[nested.messages.length - 1];
                                 if (lastMsg && lastMsg.content) {
                                     return typeof lastMsg.content === 'string' 
@@ -762,7 +785,7 @@
                 }
                 
                 // Handle AIMessage format directly
-                if (parsed.id && parsed.content && parsed.type === 'ai') {
+                if (parsed.content && (parsed.type === 'ai' || parsed.type === 'assistant')) {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
@@ -777,6 +800,16 @@
                         for (const key of Object.keys(dataObj)) {
                             const nested = dataObj[key];
                             if (nested && nested.messages && Array.isArray(nested.messages)) {
+                                // Find the last AI message
+                                for (let i = nested.messages.length - 1; i >= 0; i--) {
+                                    const msg = nested.messages[i];
+                                    if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                        return typeof msg.content === 'string' 
+                                            ? msg.content 
+                                            : JSON.stringify(msg.content);
+                                    }
+                                }
+                                // Fallback to last message with content
                                 const lastMsg = nested.messages[nested.messages.length - 1];
                                 if (lastMsg && lastMsg.content) {
                                     return typeof lastMsg.content === 'string' 
@@ -787,6 +820,16 @@
                         }
                         // Also check if data itself has messages array
                         if (dataObj.messages && Array.isArray(dataObj.messages)) {
+                            // Find the last AI message
+                            for (let i = dataObj.messages.length - 1; i >= 0; i--) {
+                                const msg = dataObj.messages[i];
+                                if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                    return typeof msg.content === 'string' 
+                                        ? msg.content 
+                                        : JSON.stringify(msg.content);
+                                }
+                            }
+                            // Fallback to last message with content
                             const lastMsg = dataObj.messages[dataObj.messages.length - 1];
                             if (lastMsg && lastMsg.content) {
                                 return typeof lastMsg.content === 'string' 
@@ -797,15 +840,15 @@
                     }
                 }
                 
-                // Direct content property
-                if (parsed.content) {
+                // Direct content property (only if it's an AI response)
+                if (parsed.content && (parsed.type === 'ai' || parsed.type === 'assistant')) {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
                 }
 
-                console.log('⚠️ No content found, returning JSON:', JSON.stringify(parsed).substring(0, 200));
-                return JSON.stringify(parsed);
+                console.log('⚠️ No content found, returning null. Data:', JSON.stringify(parsed).substring(0, 200));
+                return null;
             } catch (e) {
                 console.error('❌ Extract error:', e);
                 return String(data);
