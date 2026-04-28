@@ -1,4 +1,14 @@
 ```
-__pycache__/
+# Compiled Python files
 *.pyc
+__pycache__/
+
+# Logs
+*.log
+server_debug.log
+
+# Environment files
+.env
+.env.local
+*.env.*
 ```
