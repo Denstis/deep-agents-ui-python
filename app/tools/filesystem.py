@@ -6,8 +6,22 @@ from pathlib import Path
 from typing import Any
 
 
-# Default working directory (can be configured)
-DEFAULT_ROOT_DIR = os.getenv("AGENT_WORK_DIR", os.getcwd())
+# Default working directory - resolved lazily to avoid blocking calls during import
+DEFAULT_ROOT_DIR: str | None = None
+
+
+def _get_default_root_dir() -> str:
+    """Get the default root directory for file operations.
+    
+    Returns:
+        The root directory path from AGENT_WORK_DIR env var or current working directory
+    """
+    global DEFAULT_ROOT_DIR
+    if DEFAULT_ROOT_DIR is None:
+        import os
+        val = os.getenv("AGENT_WORK_DIR", os.getcwd())
+        DEFAULT_ROOT_DIR = val
+    return DEFAULT_ROOT_DIR
 
 
 def _safe_path(path: str, root_dir: str | None = None) -> Path:
@@ -26,7 +40,7 @@ def _safe_path(path: str, root_dir: str | None = None) -> Path:
     Raises:
         ValueError: If the path is outside the allowed root directory
     """
-    root = Path(root_dir or DEFAULT_ROOT_DIR).resolve()
+    root = Path(root_dir or _get_default_root_dir()).resolve()
     target = Path(path).expanduser()
     
     # If path is not absolute, make it relative to root
