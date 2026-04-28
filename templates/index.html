@@ -10,7 +10,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background-color: #0a0a0a;
@@ -19,7 +18,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .header {
             display: flex;
             justify-content: space-between;
@@ -28,17 +26,14 @@
             border-bottom: 1px solid #333;
             background-color: #111;
         }
-
         .header h1 {
             font-size: 1.5rem;
             font-weight: 600;
         }
-
         .header-buttons {
             display: flex;
             gap: 0.5rem;
         }
-
         .btn {
             padding: 0.5rem 1rem;
             border-radius: 6px;
@@ -49,26 +44,21 @@
             font-size: 0.875rem;
             transition: all 0.2s;
         }
-
         .btn:hover {
             background-color: #2a2a2a;
         }
-
         .btn-primary {
             background-color: #2F6868;
             border-color: #2F6868;
         }
-
         .btn-primary:hover {
             background-color: #3d7a7a;
         }
-
         .main-container {
             display: flex;
             flex: 1;
             overflow: hidden;
         }
-
         .sidebar {
             width: 300px;
             border-right: 1px solid #333;
@@ -76,7 +66,6 @@
             display: flex;
             flex-direction: column;
         }
-
         .sidebar-header {
             padding: 1rem;
             border-bottom: 1px solid #333;
@@ -84,13 +73,11 @@
             justify-content: space-between;
             align-items: center;
         }
-
         .thread-list {
             flex: 1;
             overflow-y: auto;
             padding: 0.5rem;
         }
-
         .thread-item {
             padding: 0.75rem 1rem;
             border-radius: 6px;
@@ -98,63 +85,52 @@
             margin-bottom: 0.25rem;
             transition: background-color 0.2s;
         }
-
         .thread-item:hover {
             background-color: #1a1a1a;
         }
-
         .thread-item.active {
             background-color: #2F6868;
         }
-
         .chat-container {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
         .messages-container {
             flex: 1;
             overflow-y: auto;
             padding: 1.5rem;
         }
-
         .message {
             margin-bottom: 1.5rem;
             max-width: 80%;
         }
-
         .message.user {
             margin-left: auto;
             background-color: #2F6868;
             padding: 1rem;
             border-radius: 12px 12px 4px 12px;
         }
-
         .message.assistant {
             margin-right: auto;
             background-color: #1a1a1a;
             padding: 1rem;
             border-radius: 12px 12px 12px 4px;
         }
-
         .message-content {
             white-space: pre-wrap;
             line-height: 1.5;
         }
-
         .input-container {
             padding: 1rem 1.5rem;
             border-top: 1px solid #333;
             background-color: #111;
         }
-
         .input-form {
             display: flex;
             gap: 0.5rem;
         }
-
         .message-input {
             flex: 1;
             padding: 0.75rem 1rem;
@@ -165,12 +141,10 @@
             font-size: 0.875rem;
             resize: none;
         }
-
         .message-input:focus {
             outline: none;
             border-color: #2F6868;
         }
-
         /* Modal Styles */
         .modal-overlay {
             position: fixed;
@@ -184,7 +158,6 @@
             justify-content: center;
             z-index: 1000;
         }
-
         .modal {
             background-color: #1a1a1a;
             border-radius: 12px;
@@ -193,23 +166,19 @@
             max-width: 500px;
             border: 1px solid #333;
         }
-
         .modal h2 {
             margin-bottom: 1.5rem;
             font-size: 1.25rem;
         }
-
         .form-group {
             margin-bottom: 1rem;
         }
-
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             font-size: 0.875rem;
             color: #aaa;
         }
-
         .form-group input {
             width: 100%;
             padding: 0.75rem;
@@ -219,23 +188,19 @@
             color: #fff;
             font-size: 0.875rem;
         }
-
         .form-group input:focus {
             outline: none;
             border-color: #2F6868;
         }
-
         .modal-actions {
             display: flex;
             justify-content: flex-end;
             gap: 0.5rem;
             margin-top: 1.5rem;
         }
-
         .hidden {
             display: none !important;
         }
-
         .status-indicator {
             display: inline-block;
             width: 8px;
@@ -243,21 +208,17 @@
             border-radius: 50%;
             margin-right: 0.5rem;
         }
-
         .status-connected {
             background-color: #22c55e;
         }
-
         .status-disconnected {
             background-color: #ef4444;
         }
-
         .typing-indicator {
             display: flex;
             gap: 4px;
             padding: 1rem;
         }
-
         .typing-dot {
             width: 8px;
             height: 8px;
@@ -265,15 +226,12 @@
             background-color: #666;
             animation: typing 1.4s infinite;
         }
-
         .typing-dot:nth-child(2) {
             animation-delay: 0.2s;
         }
-
         .typing-dot:nth-child(3) {
             animation-delay: 0.4s;
         }
-
         @keyframes typing {
             0%, 60%, 100% {
                 transform: translateY(0);
@@ -325,7 +283,6 @@
             </form>
         </div>
     </div>
-
     <!-- Header -->
     <header class="header">
         <h1>🚀 Deep Agents UI</h1>
@@ -335,7 +292,6 @@
             <button class="btn btn-primary" onclick="newThread()">+ New Thread</button>
         </div>
     </header>
-
     <!-- Main Container -->
     <div class="main-container">
         <!-- Sidebar -->
@@ -348,7 +304,6 @@
                 <!-- Threads will be loaded here -->
             </div>
         </aside>
-
         <!-- Chat Container -->
         <main class="chat-container">
             <div id="messagesContainer" class="messages-container">
@@ -370,35 +325,29 @@
             </div>
         </main>
     </div>
-
     <script>
         // State
         let currentThreadId = null;
         let config = null;
         let isStreaming = false;
-
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             await checkConfig();
             loadThreads();
         });
-
         // Config Modal Functions
         function showConfigModal() {
             document.getElementById('configModal').classList.remove('hidden');
         }
-
         function closeConfigModal() {
             document.getElementById('configModal').classList.add('hidden');
         }
-
         async function checkConfig() {
             try {
                 const response = await fetch('/api/config', {
                     credentials: 'include'  // Include cookies for session
                 });
                 const data = await response.json();
-                
                 if (data.configured) {
                     config = data;
                     updateStatus(true);
@@ -412,14 +361,11 @@
                 showConfigModal();
             }
         }
-
         document.getElementById('configForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const deploymentUrl = document.getElementById('deploymentUrl').value;
             const assistantId = document.getElementById('assistantId').value;
             const apiKey = document.getElementById('apiKey').value;
-
             try {
                 const response = await fetch('/api/config', {
                     method: 'POST',
@@ -431,7 +377,6 @@
                         langsmith_api_key: apiKey || null
                     })
                 });
-
                 if (response.ok) {
                     config = { deployment_url: deploymentUrl, assistant_id: assistantId };
                     updateStatus(true);
@@ -446,7 +391,6 @@
                 alert('Failed to save settings. Please try again.');
             }
         });
-
         // Status Update
         function updateStatus(connected) {
             const indicator = document.getElementById('statusIndicator');
@@ -456,20 +400,16 @@
                 indicator.className = 'status-indicator status-disconnected';
             }
         }
-
         // Thread Management
         async function loadThreads() {
             if (!config) return;
-
             try {
                 const response = await fetch('/api/threads', {
                     credentials: 'include'  // Include cookies for session
                 });
                 const data = await response.json();
-                
                 const threadList = document.getElementById('threadList');
                 threadList.innerHTML = '';
-
                 if (data.threads && data.threads.length > 0) {
                     data.threads.forEach(thread => {
                         const threadEl = document.createElement('div');
@@ -485,13 +425,11 @@
                 console.error('Error loading threads:', error);
             }
         }
-
         async function newThread() {
             if (!config) {
                 showConfigModal();
                 return;
             }
-
             try {
                 const response = await fetch('/api/threads', { 
                     method: 'POST',
@@ -506,32 +444,27 @@
                 addMessage('assistant', 'Error creating new thread.');
             }
         }
-
         async function selectThread(threadId) {
             currentThreadId = threadId;
-            
             // Update active state in UI
             document.querySelectorAll('.thread-item').forEach(item => {
                 item.classList.remove('active');
             });
             event.target.classList.add('active');
-
             // Load thread history
             try {
                 const response = await fetch(`/api/threads/${threadId}/state`, {
                     credentials: 'include'  // Include cookies for session
                 });
                 const state = await response.json();
-                
                 // Clear and load messages
                 const container = document.getElementById('messagesContainer');
                 container.innerHTML = '';
-                
                 if (state.values && state.values.messages) {
                     state.values.messages.forEach(msg => {
                         if (msg.type === 'human') {
                             addMessage('user', msg.content);
-                        } else if (msg.type === 'ai' || msg.type === 'assistant') {
+                        } else if (msg.type === 'ai') {
                             addMessage('assistant', msg.content);
                         }
                     });
@@ -540,34 +473,25 @@
                 console.error('Error loading thread state:', error);
             }
         }
-
         // Message Handling
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            
             if (!message || isStreaming) return;
-
             if (!currentThreadId) {
                 await newThread();
             }
-
             // Add user message
             addMessage('user', message);
             input.value = '';
-
             // Send message and stream response
             await sendMessage(message);
         });
-
         async function sendMessage(message) {
             isStreaming = true;
-            
             console.log('🚀 Sending message:', message);
             console.log('📍 Thread ID:', currentThreadId);
-            
             // Show typing indicator
             const container = document.getElementById('messagesContainer');
             const typingEl = document.createElement('div');
@@ -582,7 +506,6 @@
             `;
             container.appendChild(typingEl);
             container.scrollTop = container.scrollHeight;
-
             try {
                 console.log('📡 Fetching /api/stream...');
                 const response = await fetch('/api/stream', {
@@ -594,63 +517,49 @@
                         message: message
                     })
                 });
-                
                 console.log('📥 Response status:', response.status, response.ok);
-
                 // Remove typing indicator
                 const typingIndicator = document.getElementById('typingIndicator');
                 if (typingIndicator) {
                     typingIndicator.remove();
                 }
-
                 // Create assistant message element
                 const assistantMsg = document.createElement('div');
                 assistantMsg.className = 'message assistant';
                 assistantMsg.innerHTML = '<div class="message-content"></div>';
                 container.appendChild(assistantMsg);
                 const contentEl = assistantMsg.querySelector('.message-content');
-
                 // Stream the response
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullContent = '';
-
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
                     let currentEvent = 'message'; // Default SSE event type
-
                     for (const line of lines) {
                         if (line.startsWith('event: ')) {
                             currentEvent = line.slice(7);
                             continue;
                         }
-                        
                         if (line.startsWith('data: ')) {
                             try {
                                 const rawData = line.slice(6);
                                 console.log('📥 Raw SSE data:', rawData);
-                                
                                 const data = JSON.parse(rawData);
-                                
                                 // Debug logging
                                 console.log('📥 SSE Event Type:', currentEvent, 'Full data:', data);
                                 console.log('📥 Data type:', typeof data, 'Value:', data);
-                                
                                 // Handle different event types based on SSE event field
                                 // Check if this is a message-related event that contains content
                                 const isMessageEvent = currentEvent === 'messages' || 
                                                        currentEvent === 'messages/complete' || 
-                                                       currentEvent === 'messages/metadata' ||
                                                        currentEvent === 'values' || 
                                                        currentEvent === 'updates' ||
                                                        currentEvent === 'message';
-                                
                                 console.log('🔍 Is message event?', isMessageEvent, 'Current event:', currentEvent);
-                                
                                 if (isMessageEvent) {
                                     console.log('🔍 Processing event type:', currentEvent, 'with data:', data);
                                     const content = extractMessageContent(data);
@@ -673,11 +582,9 @@
                         }
                     }
                 }
-
                 if (!fullContent) {
                     contentEl.textContent = 'Response received.';
                 }
-
             } catch (error) {
                 console.error('Error streaming message:', error);
                 const typingIndicator = document.getElementById('typingIndicator');
@@ -690,16 +597,13 @@
                 loadThreads(); // Refresh thread list
             }
         }
-
         function extractMessageContent(data) {
             console.log('🔍 Extracting content from:', typeof data === 'string' ? data.substring(0, 200) : data);
             console.log('🔍 Data constructor:', data?.constructor?.name);
             console.log('🔍 Is Array?', Array.isArray(data));
-            
             try {
                 // Data is already parsed by EventSourceResponse - no need to JSON.parse()
                 const parsed = data;
-                
                 // Handle array of messages (e.g., from 'messages/complete' event)
                 if (Array.isArray(parsed)) {
                     console.log('📦 Detected array of messages, length:', parsed.length);
@@ -709,24 +613,15 @@
                         const msg = parsed[i];
                         console.log('🔍 Checking message', i, ':', msg);
                         console.log('🔍 Message type:', msg?.type, 'has content:', !!msg?.content);
-                        if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                        if (msg.content && (msg.type === 'ai')) {
                             const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
                             console.log('✅ Found AI message content:', content.substring(0, 100));
                             return content;
                         }
                     }
-                    // Fallback: just get the last item with content (regardless of type)
-                    for (let i = parsed.length - 1; i >= 0; i--) {
-                        const msg = parsed[i];
-                        if (msg && msg.content) {
-                            console.log('⚠️ Fallback: using last message with content');
-                            return typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-                        }
-                    }
-                    console.log('❌ No content found in array');
+                    console.log('❌ No AI content found in array');
                     return null;
                 }
-                
                 // Handle object with messages array (e.g., from 'values' event: {messages: [...]})
                 if (parsed.messages && Array.isArray(parsed.messages)) {
                     console.log('📦 Detected object with messages array');
@@ -734,7 +629,7 @@
                     for (let i = parsed.messages.length - 1; i >= 0; i--) {
                         const msg = parsed.messages[i];
                         console.log('🔍 Checking message at index', i, ':', msg);
-                        if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                        if (msg.content && (msg.type === 'ai')) {
                             console.log('✅ Found AI message content in messages array');
                             return typeof msg.content === 'string' 
                                 ? msg.content 
@@ -745,7 +640,6 @@
                     console.log('⚠️ No AI message found in messages array, skipping');
                     return null;
                 }
-                
                 // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
                 // Check for any key that contains messages array
                 if (typeof parsed === 'object' && !parsed.messages && !parsed.data) {
@@ -761,7 +655,7 @@
                                 for (let i = nested.messages.length - 1; i >= 0; i--) {
                                     const msg = nested.messages[i];
                                     console.log(`    🔍 Message ${i}: type=${msg.type}, content=${msg.content ? msg.content.substring(0, 50) : 'null'}`);
-                                    if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                    if (msg.content && (msg.type === 'ai')) {
                                         return typeof msg.content === 'string' 
                                             ? msg.content 
                                             : JSON.stringify(msg.content);
@@ -771,17 +665,17 @@
                                 console.log('⚠️ No AI message found in nested messages, skipping');
                                 return null;
                             }
+                            // For messages/metadata: check if nested.metadata exists and contains useful info
+                            // but do not treat metadata-only events as messages
                         }
                     }
                 }
-                
                 // Handle AIMessage format directly
-                if (parsed.content && (parsed.type === 'ai' || parsed.type === 'assistant')) {
+                if (parsed.content && (parsed.type === 'ai')) {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
                 }
-                
                 // Handle nested messages in data object (e.g., updates: {data: {agent: {messages: [...]}}})
                 if (parsed.data) {
                     // Check if data contains nested structures like {agent: {messages: [...]}}
@@ -794,19 +688,14 @@
                                 // Find the last AI message
                                 for (let i = nested.messages.length - 1; i >= 0; i--) {
                                     const msg = nested.messages[i];
-                                    if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                    if (msg.content && (msg.type === 'ai')) {
                                         return typeof msg.content === 'string' 
                                             ? msg.content 
                                             : JSON.stringify(msg.content);
                                     }
                                 }
-                                // Fallback to last message with content
-                                const lastMsg = nested.messages[nested.messages.length - 1];
-                                if (lastMsg && lastMsg.content) {
-                                    return typeof lastMsg.content === 'string' 
-                                        ? lastMsg.content 
-                                        : JSON.stringify(lastMsg.content);
-                                }
+                                console.log('⚠️ No AI message found in nested messages, skipping');
+                                return null;
                             }
                         }
                         // Also check if data itself has messages array
@@ -814,30 +703,23 @@
                             // Find the last AI message
                             for (let i = dataObj.messages.length - 1; i >= 0; i--) {
                                 const msg = dataObj.messages[i];
-                                if (msg.content && (msg.type === 'ai' || msg.type === 'assistant')) {
+                                if (msg.content && (msg.type === 'ai')) {
                                     return typeof msg.content === 'string' 
                                         ? msg.content 
                                         : JSON.stringify(msg.content);
                                 }
                             }
-                            // Fallback to last message with content
-                            const lastMsg = dataObj.messages[dataObj.messages.length - 1];
-                            if (lastMsg && lastMsg.content) {
-                                return typeof lastMsg.content === 'string' 
-                                    ? lastMsg.content 
-                                    : JSON.stringify(lastMsg.content);
-                            }
+                            console.log('⚠️ No AI message found in data.messages, skipping');
+                            return null;
                         }
                     }
                 }
-                
                 // Direct content property (only if it's an AI response)
-                if (parsed.content && (parsed.type === 'ai' || parsed.type === 'assistant')) {
+                if (parsed.content && (parsed.type === 'ai')) {
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
                 }
-
                 console.log('⚠️ No content found, returning null. Data:', JSON.stringify(parsed).substring(0, 200));
                 return null;
             } catch (e) {
@@ -845,7 +727,6 @@
                 return String(data);
             }
         }
-
         function addMessage(role, content) {
             const container = document.getElementById('messagesContainer');
             const msgEl = document.createElement('div');
@@ -854,13 +735,11 @@
             container.appendChild(msgEl);
             container.scrollTop = container.scrollHeight;
         }
-
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-
         // Auto-resize textarea
         document.getElementById('messageInput').addEventListener('input', function() {
             this.style.height = 'auto';
