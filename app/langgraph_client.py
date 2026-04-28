@@ -102,15 +102,27 @@ class LangGraphClientWrapper:
         # Use the async generator directly instead of async with
         print(f"🔄 Starting stream for thread {thread_id} with params: {stream_params}")
         try:
+            # Get the stream object
             stream = self.client.runs.stream(**stream_params)
             event_count = 0
+            
+            # Iterate through the stream asynchronously
             async for event in stream:
                 event_count += 1
-                print(f"📩 Stream event #{event_count}: {event.get('event', 'unknown')} - {str(event)[:200]}")
-                yield event
+                print(f"📩 Stream event #{event_count}: {event.get('event', 'unknown')}")
+                print(f"   Data: {str(event)[:500]}")
+                
+                # Yield the event in a format the UI expects
+                yield {
+                    "event": event.get("event", "unknown"),
+                    "data": event.get("data", event),
+                }
+            
             print(f"✅ Stream completed with {event_count} events")
         except Exception as e:
             print(f"❌ Stream error: {e}")
+            import traceback
+            traceback.print_exc()
             yield {"event": "error", "data": {"error": str(e)}}
     
     async def submit_run(

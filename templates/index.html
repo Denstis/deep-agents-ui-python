@@ -658,10 +658,37 @@
             try {
                 const parsed = typeof data === 'string' ? JSON.parse(data) : data;
                 
+                // Handle nested data structure from SSE
+                if (parsed.data && typeof parsed.data === 'string') {
+                    try {
+                        const innerData = JSON.parse(parsed.data);
+                        return extractMessageContent(innerData);
+                    } catch (e) {
+                        // If inner parse fails, continue with original parsed data
+                    }
+                }
+                
                 // Handle different message formats
                 if (parsed.messages && Array.isArray(parsed.messages)) {
                     const lastMsg = parsed.messages[parsed.messages.length - 1];
                     if (lastMsg.content) {
+                        return typeof lastMsg.content === 'string' 
+                            ? lastMsg.content 
+                            : JSON.stringify(lastMsg.content);
+                    }
+                }
+                
+                // Handle AIMessage format
+                if (parsed.id && parsed.content && parsed.type === 'ai') {
+                    return typeof parsed.content === 'string' 
+                        ? parsed.content 
+                        : JSON.stringify(parsed.content);
+                }
+                
+                // Handle nested messages in data object
+                if (parsed.data && parsed.data.messages && Array.isArray(parsed.data.messages)) {
+                    const lastMsg = parsed.data.messages[parsed.data.messages.length - 1];
+                    if (lastMsg && lastMsg.content) {
                         return typeof lastMsg.content === 'string' 
                             ? lastMsg.content 
                             : JSON.stringify(lastMsg.content);
