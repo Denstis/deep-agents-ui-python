@@ -533,6 +533,7 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullContent = '';
+                let hasReceivedContent = false; // Флаг для предотвращения дублирования
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -572,7 +573,7 @@
                                 console.log('  - currentEvent === "messages/metadata":', currentEvent === 'messages/metadata');
                                 console.log('  - currentEvent === "values":', currentEvent === 'values');
                                 console.log('  - currentEvent === "updates":', currentEvent === 'updates');
-                                if (isMessageEvent) {
+                                if (isMessageEvent && !hasReceivedContent) {
                                     console.log('🔍 [EVENT PROCESSING] Processing event type:', currentEvent, 'with data:', JSON.stringify(data).substring(0, 200));
                                     const content = extractMessageContent(data);
                                     console.log('✅ [EVENT PROCESSING] Extracted content:', content ? content.substring(0, 100) : 'NULL');
@@ -580,6 +581,7 @@
                                     if (content) {
                                         console.log('✅ [EVENT PROCESSING] Appending content to fullContent');
                                         fullContent += content;
+                                        hasReceivedContent = true; // Помечаем, что контент уже получен
                                         console.log('✅ [EVENT PROCESSING] New fullContent:', fullContent.substring(0, 150));
                                         contentEl.textContent = fullContent;
                                         container.scrollTop = container.scrollHeight;
