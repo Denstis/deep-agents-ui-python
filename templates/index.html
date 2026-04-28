@@ -556,6 +556,7 @@
                                 // Check if this is a message-related event that contains content
                                 const isMessageEvent = currentEvent === 'messages' || 
                                                        currentEvent === 'messages/complete' || 
+                                                       currentEvent === 'messages/metadata' ||
                                                        currentEvent === 'values' || 
                                                        currentEvent === 'updates' ||
                                                        currentEvent === 'message';
@@ -641,8 +642,8 @@
                     return null;
                 }
                 // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
-                // Check for any key that contains messages array
-                if (typeof parsed === 'object' && !parsed.messages && !parsed.data) {
+                // Also handles messages/metadata events which have structure like {"uuid": {"metadata": {...}}}
+                if (typeof parsed === 'object') {
                     console.log('🔍 Checking for nested messages in object keys');
                     for (const key of Object.keys(parsed)) {
                         const nested = parsed[key];
@@ -665,8 +666,6 @@
                                 console.log('⚠️ No AI message found in nested messages, skipping');
                                 return null;
                             }
-                            // For messages/metadata: check if nested.metadata exists and contains useful info
-                            // but do not treat metadata-only events as messages
                         }
                     }
                 }
