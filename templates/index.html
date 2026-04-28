@@ -562,19 +562,24 @@
                                     currentEvent === 'message';
                                 console.log('🔍 Is message event?', isMessageEvent, 'Current event:', currentEvent);
                                 if (isMessageEvent) {
-                                    console.log('🔍 Processing event type:', currentEvent, 'with data:', data);
+                                    console.log('🔍 [EVENT PROCESSING] Processing event type:', currentEvent, 'with data:', JSON.stringify(data).substring(0, 200));
                                     const content = extractMessageContent(data);
-                                    console.log('✅ Extracted content:', content ? content.substring(0, 100) : 'NULL');
+                                    console.log('✅ [EVENT PROCESSING] Extracted content:', content ? content.substring(0, 100) : 'NULL');
+                                    console.log('✅ [EVENT PROCESSING] Current fullContent before update:', fullContent);
                                     if (content) {
+                                        console.log('✅ [EVENT PROCESSING] Appending content to fullContent');
                                         fullContent += content;
+                                        console.log('✅ [EVENT PROCESSING] New fullContent:', fullContent.substring(0, 150));
                                         contentEl.textContent = fullContent;
                                         container.scrollTop = container.scrollHeight;
+                                    } else {
+                                        console.log('⚠️ [EVENT PROCESSING] Content is NULL/empty, not updating UI');
                                     }
                                 } else if (currentEvent === 'error') {
                                     console.error('❌ Server error:', data);
                                 } else {
                                     // Log metadata and other non-message events without showing warning
-                                    console.log('ℹ️ Other event:', currentEvent, '- Data:', data);
+                                    console.log('ℹ️ Other event:', currentEvent, '- Data:', JSON.stringify(data).substring(0, 200));
                                 }
                             } catch (e) {
                                 console.error('Failed to parse SSE data:', line, e);
@@ -583,8 +588,12 @@
                         }
                     }
                 }
+                console.log('🏁 [FINAL CHECK] Stream ended. fullContent value:', fullContent ? fullContent.substring(0, 150) : 'EMPTY');
                 if (!fullContent) {
+                    console.log('⚠️ [FINAL CHECK] No content was extracted, showing fallback message');
                     contentEl.textContent = 'Response received.';
+                } else {
+                    console.log('✅ [FINAL CHECK] Content was successfully extracted and displayed');
                 }
             } catch (error) {
                 console.error('Error streaming message:', error);
@@ -607,63 +616,81 @@
                 const parsed = data;
                 // Handle array of messages (e.g., from 'messages/complete' event)
                 if (Array.isArray(parsed)) {
-                    console.log('📦 Detected array of messages, length:', parsed.length);
-                    console.log('📦 Array contents:', JSON.stringify(parsed).substring(0, 300));
+                    console.log('📦 [STEP 1] Detected array of messages, length:', parsed.length);
+                    console.log('📦 [STEP 1] Array contents:', JSON.stringify(parsed).substring(0, 300));
                     // Get the last AI message from the array
                     for (let i = parsed.length - 1; i >= 0; i--) {
                         const msg = parsed[i];
-                        console.log('🔍 Checking message', i, ':', msg);
-                        console.log('🔍 Message type:', msg?.type, 'has content:', !!msg?.content);
+                        console.log('📦 [STEP 2] Checking message', i, ':', msg);
+                        console.log('📦 [STEP 2] Message type:', msg?.type, 'has content:', !!msg?.content);
+                        console.log('📦 [STEP 2] msg.type === "ai":', msg?.type === 'ai');
+                        console.log('📦 [STEP 2] msg.content value:', msg?.content);
                         if (msg.content && (msg.type === 'ai')) {
                             const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
-                            console.log('✅ Found AI message content:', content.substring(0, 100));
+                            console.log('✅ [STEP 3] Found AI message content:', content.substring(0, 100));
                             return content;
+                        } else {
+                            console.log('❌ [STEP 2] Skipping message - content:', !!msg.content, 'type:', msg?.type);
                         }
                     }
-                    console.log('❌ No AI content found in array');
+                    console.log('❌ [FINAL] No AI content found in array');
                     return null;
                 }
                 // Handle object with messages array (e.g., from 'values' event: {messages: [...]})
                 if (parsed.messages && Array.isArray(parsed.messages)) {
-                    console.log('📦 Detected object with messages array');
+                    console.log('📦 [STEP 1] Detected object with messages array');
+                    console.log('📦 [STEP 1] Messages array length:', parsed.messages.length);
                     // Find the last AI message
                     for (let i = parsed.messages.length - 1; i >= 0; i--) {
                         const msg = parsed.messages[i];
-                        console.log('🔍 Checking message at index', i, ':', msg);
+                        console.log('📦 [STEP 2] Checking message at index', i, ':', msg);
+                        console.log('📦 [STEP 2] Message type:', msg?.type, 'has content:', !!msg?.content);
+                        console.log('📦 [STEP 2] msg.type === "ai":', msg?.type === 'ai');
+                        console.log('📦 [STEP 2] msg.content value:', msg?.content);
                         if (msg.content && (msg.type === 'ai')) {
-                            console.log('✅ Found AI message content in messages array');
+                            console.log('✅ [STEP 3] Found AI message content in messages array');
                             return typeof msg.content === 'string' 
                                 ? msg.content 
                                 : JSON.stringify(msg.content);
+                        } else {
+                            console.log('❌ [STEP 2] Skipping message - content:', !!msg.content, 'type:', msg?.type);
                         }
                     }
                     // No AI message found - return null to avoid showing user's own message
-                    console.log('⚠️ No AI message found in messages array, skipping');
+                    console.log('⚠️ [FINAL] No AI message found in messages array, skipping');
                     return null;
                 }
                 // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
                 // Also handles messages/metadata events which have structure like {"uuid": {"metadata": {...}}}
                 if (typeof parsed === 'object') {
-                    console.log('🔍 Checking for nested messages in object keys');
+                    console.log('📦 [STEP 1] Checking for nested messages in object keys');
+                    console.log('📦 [STEP 1] Object keys:', Object.keys(parsed));
                     for (const key of Object.keys(parsed)) {
                         const nested = parsed[key];
-                        console.log(`  🔍 Key '${key}':`, typeof nested, nested?.constructor?.name);
+                        console.log(`📦 [STEP 2] Key '${key}':`, typeof nested, nested?.constructor?.name);
+                        console.log(`📦 [STEP 2] Nested value:`, JSON.stringify(nested).substring(0, 200));
                         if (nested && typeof nested === 'object') {
                             // Check if nested object has messages array
                             if (nested.messages && Array.isArray(nested.messages)) {
-                                console.log(`📦 Found messages in key '${key}'`);
+                                console.log(`📦 [STEP 3] Found messages in key '${key}'`);
+                                console.log(`📦 [STEP 3] Messages length:`, nested.messages.length);
                                 // Find the last AI message
                                 for (let i = nested.messages.length - 1; i >= 0; i--) {
                                     const msg = nested.messages[i];
-                                    console.log(`    🔍 Message ${i}: type=${msg.type}, content=${msg.content ? msg.content.substring(0, 50) : 'null'}`);
+                                    console.log(`📦 [STEP 4] Message ${i}: type=${msg.type}, content=${msg.content ? msg.content.substring(0, 50) : 'null'}`);
+                                    console.log(`📦 [STEP 4] msg.type === "ai":`, msg?.type === 'ai');
+                                    console.log(`📦 [STEP 4] msg.content value:`, msg?.content);
                                     if (msg.content && (msg.type === 'ai')) {
+                                        console.log(`✅ [FINAL] Found AI message in nested object`);
                                         return typeof msg.content === 'string' 
                                             ? msg.content 
                                             : JSON.stringify(msg.content);
+                                    } else {
+                                        console.log(`❌ [STEP 4] Skipping message - content:`, !!msg.content, 'type:', msg?.type);
                                     }
                                 }
                                 // No AI message found - return null to avoid showing user's own message
-                                console.log('⚠️ No AI message found in nested messages, skipping');
+                                console.log('⚠️ [FINAL] No AI message found in nested messages, skipping');
                                 return null;
                             }
                         }
@@ -671,55 +698,77 @@
                 }
                 // Handle AIMessage format directly
                 if (parsed.content && (parsed.type === 'ai')) {
-                    return typeof parsed.content === 'string' 
+                    console.log('📦 [STEP 1] Direct AI message detected');
+                    console.log('📦 [STEP 1] Content:', parsed.content);
+                    console.log('📦 [STEP 1] Type:', parsed.type);
+                    const result = typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
+                    console.log('✅ [FINAL] Returning direct AI content:', result.substring(0, 100));
+                    return result;
                 }
                 // Handle nested messages in data object (e.g., updates: {data: {agent: {messages: [...]}}})
                 if (parsed.data) {
+                    console.log('📦 [STEP 1] Detected data property, checking nested structures');
                     // Check if data contains nested structures like {agent: {messages: [...]}}
                     const dataObj = parsed.data;
+                    console.log('📦 [STEP 1] dataObj type:', typeof dataObj);
                     if (typeof dataObj === 'object') {
                         // Try to find messages in any nested key
+                        console.log('📦 [STEP 2] Checking keys in dataObj:', Object.keys(dataObj));
                         for (const key of Object.keys(dataObj)) {
                             const nested = dataObj[key];
+                            console.log('📦 [STEP 2] Key:', key, 'nested:', nested?.constructor?.name);
                             if (nested && nested.messages && Array.isArray(nested.messages)) {
+                                console.log('📦 [STEP 3] Found messages array in dataObj.' + key);
                                 // Find the last AI message
                                 for (let i = nested.messages.length - 1; i >= 0; i--) {
                                     const msg = nested.messages[i];
+                                    console.log('📦 [STEP 4] Message', i, ': type=', msg.type, 'content=', msg.content ? msg.content.substring(0, 50) : 'null');
+                                    console.log('📦 [STEP 4] msg.type === "ai":', msg?.type === 'ai');
                                     if (msg.content && (msg.type === 'ai')) {
+                                        console.log('✅ [FINAL] Found AI message in dataObj nested structure');
                                         return typeof msg.content === 'string' 
                                             ? msg.content 
                                             : JSON.stringify(msg.content);
+                                    } else {
+                                        console.log('❌ [STEP 4] Skipping - content:', !!msg.content, 'type:', msg?.type);
                                     }
                                 }
-                                console.log('⚠️ No AI message found in nested messages, skipping');
+                                console.log('⚠️ [FINAL] No AI message found in nested messages, skipping');
                                 return null;
                             }
                         }
                         // Also check if data itself has messages array
                         if (dataObj.messages && Array.isArray(dataObj.messages)) {
+                            console.log('📦 [STEP 3] Found direct messages array in dataObj');
                             // Find the last AI message
                             for (let i = dataObj.messages.length - 1; i >= 0; i--) {
                                 const msg = dataObj.messages[i];
+                                console.log('📦 [STEP 4] Message', i, ': type=', msg.type, 'content=', msg.content ? msg.content.substring(0, 50) : 'null');
+                                console.log('📦 [STEP 4] msg.type === "ai":', msg?.type === 'ai');
                                 if (msg.content && (msg.type === 'ai')) {
+                                    console.log('✅ [FINAL] Found AI message in dataObj.messages');
                                     return typeof msg.content === 'string' 
                                         ? msg.content 
                                         : JSON.stringify(msg.content);
+                                } else {
+                                    console.log('❌ [STEP 4] Skipping - content:', !!msg.content, 'type:', msg?.type);
                                 }
                             }
-                            console.log('⚠️ No AI message found in data.messages, skipping');
+                            console.log('⚠️ [FINAL] No AI message found in data.messages, skipping');
                             return null;
                         }
                     }
                 }
-                // Direct content property (only if it's an AI response)
+                // Direct content property (only if it's an AI response) - already checked above but keeping as fallback
                 if (parsed.content && (parsed.type === 'ai')) {
+                    console.log('📦 [FALLBACK] Direct content check');
                     return typeof parsed.content === 'string' 
                         ? parsed.content 
                         : JSON.stringify(parsed.content);
                 }
-                console.log('⚠️ No content found, returning null. Data:', JSON.stringify(parsed).substring(0, 200));
+                console.log('⚠️ [FINAL] No content found in any path, returning null. Data preview:', JSON.stringify(parsed).substring(0, 200));
                 return null;
             } catch (e) {
                 console.error('❌ Extract error:', e);
