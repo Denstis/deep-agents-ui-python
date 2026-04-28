@@ -1,6 +1,8 @@
 INFO:     Will watch for changes in these directories: ['/workspace']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [2403] using StatReload
-INFO:     Started server process [2407]
+INFO:     Started reloader process [474] using StatReload
+INFO:     Started server process [481]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
+🚀 Deep Agents UI (Python + LM Studio) starting...
+INFO:     127.0.0.1:38088 - "GET / HTTP/1.1" 200 OK
