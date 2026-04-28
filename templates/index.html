@@ -621,8 +621,14 @@
 
                     const chunk = decoder.decode(value);
                     const lines = chunk.split('\n');
+                    let currentEvent = 'message'; // Default SSE event type
 
                     for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            currentEvent = line.slice(7);
+                            continue;
+                        }
+                        
                         if (line.startsWith('data: ')) {
                             try {
                                 const rawData = line.slice(6);
@@ -631,23 +637,24 @@
                                 const data = JSON.parse(rawData);
                                 
                                 // Debug logging
-                                console.log('📥 Parsed SSE Event:', data.event, 'Full data:', data);
-                                console.log('📥 Data.data type:', typeof data.data, 'Value:', data.data);
+                                console.log('📥 SSE Event Type:', currentEvent, 'Full data:', data);
+                                console.log('📥 Data type:', typeof data, 'Value:', data);
                                 
-                                // Handle different event types (including 'messages/complete', 'messages', 'values', 'updates')
-                                if (data.event === 'messages' || data.event === 'messages/complete' || data.event === 'values' || data.event === 'updates') {
-                                    console.log('🔍 Processing event type:', data.event, 'with data:', data.data);
-                                    const content = extractMessageContent(data.data);
+                                // Handle different event types based on SSE event field
+                                if (currentEvent === 'messages' || currentEvent === 'messages/complete' || 
+                                    currentEvent === 'values' || currentEvent === 'updates') {
+                                    console.log('🔍 Processing event type:', currentEvent, 'with data:', data);
+                                    const content = extractMessageContent(data);
                                     console.log('✅ Extracted content:', content ? content.substring(0, 100) : 'NULL');
                                     if (content) {
                                         fullContent += content;
                                         contentEl.textContent = fullContent;
                                         container.scrollTop = container.scrollHeight;
                                     }
-                                } else if (data.event === 'error') {
-                                    console.error('❌ Server error:', data.data);
+                                } else if (currentEvent === 'error') {
+                                    console.error('❌ Server error:', data);
                                 } else {
-                                    console.log('⚠️ Unknown event type:', data.event);
+                                    console.log('⚠️ Unknown event type:', currentEvent, '- Data:', data);
                                 }
                             } catch (e) {
                                 console.error('Failed to parse SSE data:', line, e);
