@@ -259,14 +259,10 @@
                     >
                 </div>
                 <div class="form-group">
-                    <label for="assistantId">Assistant ID (Graph Name)</label>
-                    <input 
-                        type="text" 
-                        id="assistantId" 
-                        placeholder="agent"
-                        value="agent"
-                        required
-                    >
+                    <label for="agentSelect">Agent (Graph)</label>
+                    <select id="agentSelect" style="width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #333; background-color: #111; color: #fff; font-size: 0.875rem;">
+                        <!-- Agents will be dynamically loaded here -->
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="apiKey">LangSmith API Key (optional)</label>
@@ -275,6 +271,9 @@
                         id="apiKey" 
                         placeholder="lsv2_..."
                     >
+                </div>
+                <div id="agentInfo" style="margin-bottom: 1rem; padding: 0.75rem; background-color: #111; border-radius: 6px; border: 1px solid #333;">
+                    <strong>Инструменты:</strong> <span id="agentTools" style="color: #aaa;">-</span>
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn" onclick="closeConfigModal()">Cancel</button>
@@ -330,14 +329,72 @@
         let currentThreadId = null;
         let config = null;
         let isStreaming = false;
+        let availableAgents = {};
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
+            await loadAgents();
             await checkConfig();
             loadThreads();
         });
+        
+        // Load available agents
+        async function loadAgents() {
+            try {
+                const response = await fetch('/api/agents');
+                const data = await response.json();
+                availableAgents = data.agents || {};
+                
+                // Populate agent select dropdown dynamically
+                const agentSelect = document.getElementById('agentSelect');
+                if (agentSelect) {
+                    // Clear existing options
+                    agentSelect.innerHTML = '';
+                    
+                    // Add options from available agents
+                    Object.entries(availableAgents).forEach(([agentId, agentInfo]) => {
+                        const option = document.createElement('option');
+                        option.value = agentId;
+                        // Use emoji from name if available, otherwise use default
+                        const displayName = agentInfo.name || agentId;
+                        option.textContent = displayName;
+                        
+                        // Mark default agent
+                        if (agentInfo.default) {
+                            option.selected = true;
+                            option.textContent += ' (по умолчанию)';
+                        }
+                        
+                        agentSelect.appendChild(option);
+                    });
+                    
+                    // Update agent info display when selection changes
+                    agentSelect.addEventListener('change', updateAgentInfo);
+                    // Initial update
+                    updateAgentInfo();
+                }
+            } catch (error) {
+                console.error('Error loading agents:', error);
+            }
+        }
+        
+        function updateAgentInfo() {
+            const selectedAgent = document.getElementById('agentSelect').value;
+            const toolsSpan = document.getElementById('agentTools');
+            
+            if (availableAgents[selectedAgent]) {
+                const agent = availableAgents[selectedAgent];
+                toolsSpan.textContent = agent.tools.join(', ');
+            } else {
+                toolsSpan.textContent = '-';
+            }
+        }
+        
         // Config Modal Functions
         function showConfigModal() {
             document.getElementById('configModal').classList.remove('hidden');
+            // Update agent info when modal opens
+            updateAgentInfo();
         }
         function closeConfigModal() {
             document.getElementById('configModal').classList.add('hidden');
@@ -352,8 +409,29 @@
                     config = data;
                     updateStatus(true);
                     document.getElementById('deploymentUrl').value = data.deployment_url;
-                    document.getElementById('assistantId').value = data.assistant_id;
+                    // Set the selected agent in dropdown - wait for agents to load first
+                    const agentSelect = document.getElementById('agentSelect');
+                    if (agentSelect && data.assistant_id) {
+                        // Wait a bit to ensure agents are loaded
+                        setTimeout(() => {
+                            agentSelect.value = data.assistant_id;
+                            updateAgentInfo();
+                        }, 100);
+                    } else {
+                        updateAgentInfo();
+                    }
                 } else {
+                    // Set default agent if available - wait for agents to load first
+                    const agentSelect = document.getElementById('agentSelect');
+                    if (data.default_assistant_id && agentSelect) {
+                        // Wait a bit to ensure agents are loaded
+                        setTimeout(() => {
+                            agentSelect.value = data.default_assistant_id;
+                            updateAgentInfo();
+                        }, 100);
+                    } else {
+                        updateAgentInfo();
+                    }
                     showConfigModal();
                 }
             } catch (error) {
@@ -364,7 +442,7 @@
         document.getElementById('configForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const deploymentUrl = document.getElementById('deploymentUrl').value;
-            const assistantId = document.getElementById('assistantId').value;
+            const assistantId = document.getElementById('agentSelect').value;
             const apiKey = document.getElementById('apiKey').value;
             try {
                 const response = await fetch('/api/config', {
@@ -381,7 +459,7 @@
                     config = { deployment_url: deploymentUrl, assistant_id: assistantId };
                     updateStatus(true);
                     closeConfigModal();
-                    addMessage('assistant', 'Settings saved successfully!');
+                    addMessage('assistant', `Settings saved! Selected agent: ${assistantId}`);
                     loadThreads();
                 } else {
                     throw new Error('Failed to save settings');

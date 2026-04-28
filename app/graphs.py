@@ -521,11 +521,11 @@ APPROACH:
 # Export Factory Functions
 # ============================================================================
 
-def get_agent(agent_type: str = "universal"):
+def get_agent(agent_type: str = "supervisor"):
     """Factory function to get an agent by type.
     
     Args:
-        agent_type: Type of agent ("research", "coding", "system", "data", "supervisor", "universal")
+        agent_type: Type of agent ("research", "coding", "system", "data", "supervisor"/"orchestrator", "universal")
     
     Returns:
         Compiled LangGraph agent
@@ -536,6 +536,7 @@ def get_agent(agent_type: str = "universal"):
         "system": create_system_agent,
         "data": create_data_agent,
         "supervisor": create_supervisor_agent,
+        "orchestrator": create_supervisor_agent,  # Alias for supervisor
         "universal": create_universal_agent,
     }
     

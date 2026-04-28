@@ -21,6 +21,7 @@ import httpx
 
 from app.config import StandaloneConfig, get_config, save_config
 from app.langgraph_client import LangGraphClientWrapper
+from app.graphs import get_agent, create_research_agent, create_coding_agent, create_system_agent, create_data_agent, create_supervisor_agent, create_universal_agent
 
 
 # ============== Pydantic Models ==============
@@ -28,8 +29,15 @@ from app.langgraph_client import LangGraphClientWrapper
 class ConfigRequest(BaseModel):
     """Request model for configuration."""
     deployment_url: str = Field(..., description="LangGraph deployment URL")
-    assistant_id: str = Field(..., description="Assistant ID")
+    assistant_id: str = Field(default="orchestrator", description="Assistant ID (agent type)")
     langsmith_api_key: Optional[str] = Field(None, description="Optional LangSmith API key")
+
+
+class AgentInfo(BaseModel):
+    """Information about an available agent."""
+    name: str
+    description: str
+    tools: list[str]
 
 
 class MessageRequest(BaseModel):
@@ -131,7 +139,53 @@ async def get_configuration(request: Request):
             },
             headers={"Content-Type": "application/json; charset=utf-8"},
         )
-    return JSONResponse(content={"configured": False}, headers={"Content-Type": "application/json; charset=utf-8"})
+    # Return default orchestrator agent
+    return JSONResponse(
+        content={
+            "configured": False,
+            "default_assistant_id": "orchestrator"
+        }, 
+        headers={"Content-Type": "application/json; charset=utf-8"}
+    )
+
+
+@app.get("/api/agents")
+async def list_agents():
+    """Get list of available agents with their descriptions and tools."""
+    agents = {
+        "orchestrator": {
+            "name": "Оркестратор (Supervisor)",
+            "description": "Координирует работу специализированных агентов, распределяет задачи между ними",
+            "tools": ["route_tasks", "coordinate_agents", "review_outputs"],
+            "default": True
+        },
+        "research": {
+            "name": "Исследователь (Research)",
+            "description": "Поиск информации в интернете, сбор данных, проверка фактов",
+            "tools": ["web_search", "duckduckgo_search", "fetch_url"]
+        },
+        "coding": {
+            "name": "Разработчик (Coding)",
+            "description": "Написание и выполнение Python кода, работа с файлами",
+            "tools": ["execute_python", "read_file", "write_file", "list_directory", "install_package"]
+        },
+        "system": {
+            "name": "Системный администратор (System)",
+            "description": "Выполнение команд оболочки, сетевая диагностика, управление файлами",
+            "tools": ["execute_command", "run_python_script", "ping_host", "port_scan", "get_network_info"]
+        },
+        "data": {
+            "name": "Аналитик данных (Data)",
+            "description": "Анализ данных, статистика, визуализация",
+            "tools": ["execute_python", "read_file", "write_file", "pandas", "matplotlib"]
+        },
+        "universal": {
+            "name": "Универсальный (Universal)",
+            "description": "Агент со всеми доступными инструментами для любых задач",
+            "tools": ["web_search", "execute_python", "execute_command", "read_file", "write_file", "pip_tools", "network_tools"]
+        }
+    }
+    return JSONResponse(content={"agents": agents}, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.post("/api/config")
