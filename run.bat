@@ -79,15 +79,19 @@ REM Try to start local LangGraph if available
 echo Checking LangGraph local server...
 where langgraph >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [INFO] langgraph-cli detected. To run LangGraph locally:
-    echo   langgraph dev --port 6000
+    echo [INFO] langgraph-cli detected.
+    echo Starting LangGraph local server automatically...
     echo.
-    echo Starting LangGraph local server in background...
     start "LangGraph Local" cmd /c "langgraph dev --port 6000"
-    timeout /t 3 /nobreak >nul
+    echo Waiting for LangGraph to start...
+    timeout /t 5 /nobreak >nul
+    echo [OK] LangGraph local server should be starting on http://localhost:6000
 ) else (
-    echo [INFO] langgraph-cli not installed. Using remote LangGraph deployment only.
-    echo To enable local LangGraph, ensure you have a langgraph.json config file.
+    echo [WARNING] langgraph-cli not found in PATH.
+    echo To enable local LangGraph, the packages should have been installed above.
+    echo Trying to run with python -m langgraph...
+    start "LangGraph Local" cmd /c "python -m langgraph dev --port 6000"
+    timeout /t 5 /nobreak >nul
 )
 echo.
 

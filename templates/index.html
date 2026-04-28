@@ -288,23 +288,25 @@
     <!-- Configuration Modal -->
     <div id="configModal" class="modal-overlay hidden">
         <div class="modal">
-            <h2>⚙️ Configuration</h2>
+            <h2>⚙️ Settings</h2>
             <form id="configForm">
                 <div class="form-group">
                     <label for="deploymentUrl">LangGraph Deployment URL</label>
                     <input 
                         type="text" 
                         id="deploymentUrl" 
-                        placeholder="http://127.0.0.1:2024"
+                        placeholder="http://127.0.0.1:6000"
+                        value="http://127.0.0.1:6000"
                         required
                     >
                 </div>
                 <div class="form-group">
-                    <label for="assistantId">Assistant ID</label>
+                    <label for="assistantId">Assistant ID (Graph Name)</label>
                     <input 
                         type="text" 
                         id="assistantId" 
-                        placeholder="research"
+                        placeholder="agent"
+                        value="agent"
                         required
                     >
                 </div>
@@ -318,7 +320,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn" onclick="closeConfigModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Configuration</button>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
                 </div>
             </form>
         </div>
@@ -352,7 +354,7 @@
             <div id="messagesContainer" class="messages-container">
                 <!-- Messages will be displayed here -->
                 <div class="message assistant">
-                    <div class="message-content">Welcome to Deep Agents UI! Configure your LangGraph deployment to get started.</div>
+                    <div class="message-content">Welcome to Deep Agents UI! Set up your LangGraph deployment URL and Assistant ID to get started.</div>
                 </div>
             </div>
             <div class="input-container">
@@ -392,7 +394,9 @@
 
         async function checkConfig() {
             try {
-                const response = await fetch('/api/config');
+                const response = await fetch('/api/config', {
+                    credentials: 'include'  // Include cookies for session
+                });
                 const data = await response.json();
                 
                 if (data.configured) {
@@ -420,6 +424,7 @@
                 const response = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',  // Include cookies for session
                     body: JSON.stringify({
                         deployment_url: deploymentUrl,
                         assistant_id: assistantId,
@@ -431,14 +436,14 @@
                     config = { deployment_url: deploymentUrl, assistant_id: assistantId };
                     updateStatus(true);
                     closeConfigModal();
-                    addMessage('assistant', 'Configuration saved successfully!');
+                    addMessage('assistant', 'Settings saved successfully!');
                     loadThreads();
                 } else {
-                    throw new Error('Failed to save configuration');
+                    throw new Error('Failed to save settings');
                 }
             } catch (error) {
                 console.error('Error saving config:', error);
-                alert('Failed to save configuration. Please try again.');
+                alert('Failed to save settings. Please try again.');
             }
         });
 
@@ -457,7 +462,9 @@
             if (!config) return;
 
             try {
-                const response = await fetch('/api/threads');
+                const response = await fetch('/api/threads', {
+                    credentials: 'include'  // Include cookies for session
+                });
                 const data = await response.json();
                 
                 const threadList = document.getElementById('threadList');
@@ -486,7 +493,10 @@
             }
 
             try {
-                const response = await fetch('/api/threads', { method: 'POST' });
+                const response = await fetch('/api/threads', { 
+                    method: 'POST',
+                    credentials: 'include'  // Include cookies for session
+                });
                 const thread = await response.json();
                 currentThreadId = thread.thread_id;
                 addMessage('assistant', 'New thread created. How can I help you?');
@@ -508,7 +518,9 @@
 
             // Load thread history
             try {
-                const response = await fetch(`/api/threads/${threadId}/state`);
+                const response = await fetch(`/api/threads/${threadId}/state`, {
+                    credentials: 'include'  // Include cookies for session
+                });
                 const state = await response.json();
                 
                 // Clear and load messages
@@ -572,6 +584,7 @@
                 const response = await fetch('/api/stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',  // Include cookies for session
                     body: JSON.stringify({
                         thread_id: currentThreadId,
                         message: message

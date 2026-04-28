@@ -16,7 +16,7 @@ def call_model(state: AgentState) -> dict:
     last_message = state["messages"][-1] if state["messages"] else None
     
     if last_message and isinstance(last_message, HumanMessage):
-        response = f"Echo: {last_message.content}"
+        response = f"🤖 Agent received: '{last_message.content}'\nThis is a test response from your local LangGraph agent."
         return {"messages": [AIMessage(content=response)]}
     
     return {"messages": [AIMessage(content="Hello! I'm a simple test agent.")]}

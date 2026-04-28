@@ -1,11 +1,13 @@
 ```
-# Python
-__pycache__/
+# Compiled Python files
 *.pyc
-*.pyo
-*.pyd
+__pycache__/
 
-# Environment
+# Logs
+*.log
+server.log
+
+# Environment files
 .env
 .env.local
 *.env.*
@@ -13,4 +15,28 @@ __pycache__/
 # Dependencies
 .venv/
 venv/
+node_modules/
+
+# Build artifacts
+dist/
+build/
+target/
+
+# Editors
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+coverage/
+htmlcov/
+
+# Cache directories
+.mypy_cache/
+.pytest_cache/
+.gradle/
 ```
