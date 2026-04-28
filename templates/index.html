@@ -641,8 +641,16 @@
                                 console.log('📥 Data type:', typeof data, 'Value:', data);
                                 
                                 // Handle different event types based on SSE event field
-                                if (currentEvent === 'messages' || currentEvent === 'messages/complete' || 
-                                    currentEvent === 'values' || currentEvent === 'updates') {
+                                // Check if this is a message-related event that contains content
+                                const isMessageEvent = currentEvent === 'messages' || 
+                                                       currentEvent === 'messages/complete' || 
+                                                       currentEvent === 'values' || 
+                                                       currentEvent === 'updates' ||
+                                                       currentEvent === 'message';
+                                
+                                console.log('🔍 Is message event?', isMessageEvent, 'Current event:', currentEvent);
+                                
+                                if (isMessageEvent) {
                                     console.log('🔍 Processing event type:', currentEvent, 'with data:', data);
                                     const content = extractMessageContent(data);
                                     console.log('✅ Extracted content:', content ? content.substring(0, 100) : 'NULL');
@@ -654,7 +662,12 @@
                                 } else if (currentEvent === 'error') {
                                     console.error('❌ Server error:', data);
                                 } else {
-                                    console.log('⚠️ Unknown event type:', currentEvent, '- Data:', data);
+                                    // Log metadata and other non-message events without showing warning
+                                    if (currentEvent === 'metadata' || currentEvent === 'messages/metadata') {
+                                        console.log('ℹ️ Metadata event:', currentEvent, '- Data:', data);
+                                    } else {
+                                        console.log('⚠️ Unknown event type:', currentEvent, '- Data:', data);
+                                    }
                                 }
                             } catch (e) {
                                 console.error('Failed to parse SSE data:', line, e);
@@ -715,13 +728,36 @@
                     return null;
                 }
                 
-                // Handle object with messages array
+                // Handle object with messages array (e.g., from 'values' event: {messages: [...]})
                 if (parsed.messages && Array.isArray(parsed.messages)) {
+                    console.log('📦 Detected object with messages array');
                     const lastMsg = parsed.messages[parsed.messages.length - 1];
-                    if (lastMsg.content) {
+                    if (lastMsg && lastMsg.content) {
+                        console.log('✅ Found content in messages array');
                         return typeof lastMsg.content === 'string' 
                             ? lastMsg.content 
                             : JSON.stringify(lastMsg.content);
+                    }
+                }
+                
+                // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
+                // Check for any key that contains messages array
+                if (typeof parsed === 'object' && !parsed.messages && !parsed.data) {
+                    console.log('🔍 Checking for nested messages in object keys');
+                    for (const key of Object.keys(parsed)) {
+                        const nested = parsed[key];
+                        if (nested && typeof nested === 'object') {
+                            // Check if nested object has messages array
+                            if (nested.messages && Array.isArray(nested.messages)) {
+                                console.log(`📦 Found messages in key '${key}'`);
+                                const lastMsg = nested.messages[nested.messages.length - 1];
+                                if (lastMsg && lastMsg.content) {
+                                    return typeof lastMsg.content === 'string' 
+                                        ? lastMsg.content 
+                                        : JSON.stringify(lastMsg.content);
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -732,7 +768,7 @@
                         : JSON.stringify(parsed.content);
                 }
                 
-                // Handle nested messages in data object (e.g., updates: {agent: {messages: [...]}})
+                // Handle nested messages in data object (e.g., updates: {data: {agent: {messages: [...]}}})
                 if (parsed.data) {
                     // Check if data contains nested structures like {agent: {messages: [...]}}
                     const dataObj = parsed.data;
