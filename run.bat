@@ -1,4 +1,5 @@
 @echo off
+setlocal EnableDelayedExpansion
 REM Deep Agents UI - Installation and Run Script for Windows
 REM Requires Python 3.10+ installed
 
@@ -92,13 +93,13 @@ if %errorlevel% equ 0 (
     :wait_loop
     set /a attempt+=1
     timeout /t 2 /nobreak >nul
-    powershell -Command "$ProgressPreference = 'SilentlyContinue'; $tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if^($tcp.Connected^) { exit 0 } else { exit 1 } } catch { exit 1 }"
-    if %errorlevel% equ 0 (
+    netstat -ano | findstr /C:"127.0.0.1:6000" /C:"0.0.0.0:6000" /C:"*:6000" >nul
+    if !errorlevel! equ 0 (
         echo [OK] LangGraph is ready on http://127.0.0.1:6000
         goto :langgraph_ready
     )
-    if %attempt% geq %max_attempts% (
-        echo [WARN] LangGraph startup timeout after %attempt% attempts.
+    if !attempt! geq !max_attempts! (
+        echo [WARN] LangGraph startup timeout after !attempt! attempts.
         echo Check langgraph.log file for errors.
         goto :langgraph_ready
     )
