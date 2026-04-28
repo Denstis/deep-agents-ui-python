@@ -112,8 +112,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def root():
     """Serve the main HTML page."""
-    with open("templates/index.html", "r") as f:
-        return HTMLResponse(content=f.read())
+    with open("templates/index.html", "r", encoding="utf-8") as f:
+        content = f.read()
+    return HTMLResponse(content=content, headers={"Content-Type": "text/html; charset=utf-8"})
 
 
 @app.get("/api/config")
@@ -122,12 +123,15 @@ async def get_configuration(request: Request):
     session_id = request.cookies.get("session_id", str(uuid.uuid4()))
     config = get_config(session_id)
     if config:
-        return {
-            "deployment_url": config.deployment_url,
-            "assistant_id": config.assistant_id,
-            "has_api_key": bool(config.langsmith_api_key),
-        }
-    return {"configured": False}
+        return JSONResponse(
+            content={
+                "deployment_url": config.deployment_url,
+                "assistant_id": config.assistant_id,
+                "has_api_key": bool(config.langsmith_api_key),
+            },
+            headers={"Content-Type": "application/json; charset=utf-8"},
+        )
+    return JSONResponse(content={"configured": False}, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.post("/api/config")
@@ -144,7 +148,7 @@ async def save_configuration(request: Request, config_req: ConfigRequest):
     # Initialize client
     app_state.get_or_create_client(session_id, config)
     
-    response = JSONResponse(content={"status": "ok"})
+    response = JSONResponse(content={"status": "ok"}, headers={"Content-Type": "application/json; charset=utf-8"})
     response.set_cookie("session_id", session_id, max_age=86400 * 7)  # 7 days
     return response
 
@@ -162,7 +166,7 @@ async def get_assistant(request: Request):
     
     client = app_state.get_or_create_client(session_id, config)
     assistant = await client.get_assistant(config.assistant_id)
-    return assistant
+    return JSONResponse(content=assistant, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.get("/api/threads")
@@ -178,7 +182,7 @@ async def list_threads(request: Request, limit: int = 20):
     
     client = app_state.get_or_create_client(session_id, config)
     threads = await client.get_threads(assistant_id=config.assistant_id, limit=limit)
-    return {"threads": threads}
+    return JSONResponse(content={"threads": threads}, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.post("/api/threads")
@@ -194,7 +198,7 @@ async def create_thread(request: Request):
     
     client = app_state.get_or_create_client(session_id, config)
     thread = await client.create_thread()
-    return thread
+    return JSONResponse(content=thread, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.delete("/api/threads/{thread_id}")
@@ -210,7 +214,7 @@ async def delete_thread(request: Request, thread_id: str):
     
     client = app_state.get_or_create_client(session_id, config)
     await client.delete_thread(thread_id)
-    return {"status": "deleted"}
+    return JSONResponse(content={"status": "deleted"}, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.get("/api/threads/{thread_id}/state")
@@ -226,7 +230,7 @@ async def get_thread_state(request: Request, thread_id: str):
     
     client = app_state.get_or_create_client(session_id, config)
     state = await client.get_thread_state(thread_id)
-    return state
+    return JSONResponse(content=state, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.post("/api/threads/{thread_id}/state")
@@ -246,7 +250,7 @@ async def update_thread_state(
     
     client = app_state.get_or_create_client(session_id, config)
     state = await client.update_thread_state(thread_id, state_update.values)
-    return state
+    return JSONResponse(content=state, headers={"Content-Type": "application/json; charset=utf-8"})
 
 
 @app.post("/api/stream")
