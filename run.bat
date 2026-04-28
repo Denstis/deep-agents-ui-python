@@ -81,8 +81,8 @@ where langgraph >nul 2>&1
 if %errorlevel% equ 0 (
     echo [INFO] langgraph-cli detected. Starting LangGraph dev server on port 6000...
     echo.
-    REM Start in new window with proper path activation
-    start "LangGraph Server" cmd /k "cd /d %~dp0 && call venv\Scripts\activate.bat && langgraph dev --port 6000 --host 127.0.0.1 --no-browser"
+    REM Start in new window with proper path activation and redirect output to log
+    start "LangGraph Server" cmd /c "cd /d %~dp0 && call venv\Scripts\activate.bat && langgraph dev --port 6000 --host 127.0.0.1 --no-browser > langgraph.log 2>&1"
     
     echo [WAIT] Waiting for LangGraph to initialize on port 6000...
     
@@ -99,7 +99,7 @@ if %errorlevel% equ 0 (
     )
     if %attempt% geq %max_attempts% (
         echo [WARN] LangGraph startup timeout after %attempt% attempts.
-        echo Check the LangGraph Server window for errors.
+        echo Check langgraph.log file for errors.
         goto :langgraph_ready
     )
     goto :wait_loop
