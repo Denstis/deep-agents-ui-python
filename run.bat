@@ -92,7 +92,7 @@ if %errorlevel% equ 0 (
     :wait_loop
     set /a attempt+=1
     timeout /t 2 /nobreak >nul
-    powershell -Command "$ProgressPreference = 'SilentlyContinue'; $tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if($tcp.Connected) { exit 0 } else { exit 1 } } catch { exit 1 }"
+    powershell -Command "$ProgressPreference = 'SilentlyContinue'; $tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if^($tcp.Connected^) { exit 0 } else { exit 1 } } catch { exit 1 }"
     if %errorlevel% equ 0 (
         echo [OK] LangGraph is ready on http://127.0.0.1:6000
         goto :langgraph_ready
