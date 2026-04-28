@@ -276,12 +276,19 @@ async def stream_run(request: Request, stream_req: StreamRequest):
                 interrupt_after=stream_req.interrupt_after,
             ):
                 print(f"📤 Yielding event: {event.get('event', 'unknown')}")
+                # Ensure data is properly serialized
+                event_data = event.get("data", event)
                 yield {
                     "event": "message",
-                    "data": json.dumps(event, default=str),
+                    "data": json.dumps({
+                        "event": event.get("event", "unknown"),
+                        "data": event_data,
+                    }, default=str),
                 }
         except Exception as e:
             print(f"❌ Stream generator error: {e}")
+            import traceback
+            traceback.print_exc()
             yield {
                 "event": "error",
                 "data": json.dumps({"error": str(e)}, default=str),
