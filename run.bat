@@ -60,6 +60,10 @@ if errorlevel 1 (
     echo WARNING: Failed to install langgraph packages, continuing with SDK-only mode...
 )
 
+REM Create required directories
+if not exist "static" mkdir static
+if not exist "templates" mkdir templates
+
 echo.
 echo ============================================
 echo   Installation complete!
