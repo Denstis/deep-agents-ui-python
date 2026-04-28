@@ -653,24 +653,33 @@
                 if (parsed.messages && Array.isArray(parsed.messages)) {
                     console.log('📦 [STEP 1] Detected object with messages array');
                     console.log('📦 [STEP 1] Messages array length:', parsed.messages.length);
-                    // Find the last AI message
+                    
+                    // Find the LAST human message index
+                    let lastHumanIndex = -1;
                     for (let i = parsed.messages.length - 1; i >= 0; i--) {
+                        if (parsed.messages[i].type === 'human') {
+                            lastHumanIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    // Find the last AI message that comes AFTER the last human message
+                    // This ensures we only show responses to the CURRENT user message
+                    for (let i = parsed.messages.length - 1; i > lastHumanIndex; i--) {
                         const msg = parsed.messages[i];
-                        console.log('📦 [STEP 2] Checking message at index', i, ':', msg);
+                        console.log('📦 [STEP 2] Checking message at index', i, '(after last human):', msg);
                         console.log('📦 [STEP 2] Message type:', msg?.type, 'has content:', !!msg?.content);
-                        console.log('📦 [STEP 2] msg.type === "ai":', msg?.type === 'ai');
-                        console.log('📦 [STEP 2] msg.content value:', msg?.content);
+                        
                         if (msg.content && (msg.type === 'ai')) {
-                            console.log('✅ [STEP 3] Found AI message content in messages array');
+                            console.log('✅ [STEP 3] Found NEW AI message content in messages array');
                             return typeof msg.content === 'string' 
                                 ? msg.content 
                                 : JSON.stringify(msg.content);
-                        } else {
-                            console.log('❌ [STEP 2] Skipping message - content:', !!msg.content, 'type:', msg?.type);
                         }
                     }
-                    // No AI message found - return null to avoid showing user's own message
-                    console.log('⚠️ [FINAL] No AI message found in messages array, skipping');
+                    
+                    // No new AI message found yet - this is normal during streaming
+                    console.log('⚠️ [FINAL] No NEW AI message found after last human message, waiting...');
                     return null;
                 }
                 // Handle nested messages in object (e.g., from 'updates' event: {agent: {messages: [...]}})
