@@ -16,12 +16,12 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/5] Checking Python version...
+echo [1/6] Checking Python version...
 python --version
 
 REM Create virtual environment if it doesn't exist
 if not exist "venv" (
-    echo [2/5] Creating virtual environment...
+    echo [2/6] Creating virtual environment...
     python -m venv venv
     if errorlevel 1 (
         echo ERROR: Failed to create virtual environment
@@ -29,11 +29,11 @@ if not exist "venv" (
         exit /b 1
     )
 ) else (
-    echo [2/5] Virtual environment already exists
+    echo [2/6] Virtual environment already exists
 )
 
 REM Activate virtual environment
-echo [3/5] Activating virtual environment...
+echo [3/6] Activating virtual environment...
 call venv\Scripts\activate.bat
 if errorlevel 1 (
     echo ERROR: Failed to activate virtual environment
@@ -42,7 +42,7 @@ if errorlevel 1 (
 )
 
 REM Install dependencies
-echo [4/5] Installing dependencies...
+echo [4/6] Installing dependencies...
 pip install --upgrade pip
 pip install -r requirements.txt
 if errorlevel 1 (
@@ -53,9 +53,9 @@ if errorlevel 1 (
 
 REM Install LangGraph locally for standalone mode
 echo.
-echo [5/5] Setting up LangGraph local server...
-echo Installing langgraph and langgraph-cli for local development...
-pip install langgraph langgraph-cli langgraph-checkpoint-sqlite
+echo [5/6] Setting up LangGraph local server...
+echo Installing langgraph-cli for local development...
+pip install langgraph-cli "langgraph-cli[inmem]" langgraph-checkpoint-sqlite
 if errorlevel 1 (
     echo WARNING: Failed to install langgraph packages, continuing with SDK-only mode...
 )
@@ -75,23 +75,41 @@ echo Checking LM Studio connection...
 powershell -Command "try { $response = Invoke-WebRequest -Uri 'http://localhost:1234/v1/models' -TimeoutSec 3 -ErrorAction Stop; Write-Host '[OK] LM Studio is running on http://localhost:1234' } catch { Write-Host '[WARNING] LM Studio is NOT running on http://localhost:1234' -ForegroundColor Yellow; Write-Host 'Please start LM Studio and load a model first!' }"
 echo.
 
-REM Try to start local LangGraph if available
-echo Checking LangGraph local server...
+REM Start LangGraph local server in a separate window
+echo [6/6] Starting LangGraph local server...
 where langgraph >nul 2>&1
 if %errorlevel% equ 0 (
-    echo [INFO] langgraph-cli detected.
-    echo Starting LangGraph local server automatically...
+    echo [INFO] langgraph-cli detected. Starting LangGraph dev server on port 6000...
     echo.
-    start "LangGraph Local" cmd /c "langgraph dev --port 6000"
-    echo Waiting for LangGraph to start...
-    timeout /t 5 /nobreak >nul
-    echo [OK] LangGraph local server should be starting on http://localhost:6000
+    REM Start in new window with proper path activation
+    start "LangGraph Server" cmd /k "cd /d %~dp0 && call venv\Scripts\activate.bat && langgraph dev --port 6000 --host 127.0.0.1 --no-browser"
+    
+    echo [WAIT] Waiting for LangGraph to initialize on port 6000...
+    
+    REM Wait for port 6000 to be available (up to 30 seconds)
+    set /a max_attempts=15
+    set /a attempt=0
+    :wait_loop
+    set /a attempt+=1
+    timeout /t 2 /nobreak >nul
+    powershell -Command "$tcp = New-Object Net.Sockets.TcpClient; try { $tcp.Connect('127.0.0.1', 6000); if($tcp.Connected) { exit 0 } else { exit 1 } } catch { exit 1 }"
+    if %errorlevel% equ 0 (
+        echo [OK] LangGraph is ready on http://127.0.0.1:6000
+        goto :langgraph_ready
+    )
+    if %attempt% geq %max_attempts% (
+        echo [WARN] LangGraph startup timeout after %attempt% attempts.
+        echo Check the LangGraph Server window for errors.
+        goto :langgraph_ready
+    )
+    goto :wait_loop
+    
+    :langgraph_ready
 ) else (
-    echo [WARNING] langgraph-cli not found in PATH.
-    echo To enable local LangGraph, the packages should have been installed above.
-    echo Trying to run with python -m langgraph...
-    start "LangGraph Local" cmd /c "python -m langgraph dev --port 6000"
-    timeout /t 5 /nobreak >nul
+    echo [ERROR] langgraph command not found even after installation.
+    echo Please check the installation logs above.
+    echo The app will start but you may need to use a cloud LangGraph deployment.
+    timeout /t 3 >nul
 )
 echo.
 
@@ -99,12 +117,12 @@ echo Starting Deep Agents UI server...
 echo.
 echo Open http://localhost:8000 in your browser
 echo.
-echo Configuration options:
-echo   - LangGraph Deployment URL: http://localhost:6000 (local) or your cloud URL
-echo   - LM Studio URL: http://localhost:1234 (default)
-echo   - Set LMSTUDIO_URL env var to change LM Studio endpoint
+echo Default Configuration:
+echo   - LangGraph URL: http://localhost:6000
+echo   - LM Studio URL: http://localhost:1234
 echo.
-echo Press Ctrl+C to stop the server
+echo Press Ctrl+C to stop the UI server.
+echo (The LangGraph server window will remain open - close it separately)
 echo ============================================
 echo.
 
