@@ -541,16 +541,21 @@
                     let currentEvent = 'message'; // Default SSE event type
                     for (const line of lines) {
                         if (line.startsWith('event: ')) {
-                            currentEvent = line.slice(7);
+                            currentEvent = line.slice(7).trim();
+                            console.log('🏷️ [SSE] Event header found, set currentEvent to:', JSON.stringify(currentEvent));
                             continue;
                         }
                         if (line.startsWith('data: ')) {
                             try {
                                 const rawData = line.slice(6);
+                                // Skip empty data lines
+                                if (!rawData.trim()) {
+                                    continue;
+                                }
                                 console.log('📥 Raw SSE data:', rawData);
                                 const data = JSON.parse(rawData);
                                 // Debug logging
-                                console.log('📥 SSE Event Type:', currentEvent, 'Full data:', data);
+                                console.log('📥 SSE Event Type:', JSON.stringify(currentEvent), 'Full data:', data);
                                 console.log('📥 Data type:', typeof data, 'Value:', data);
                                 // Handle different event types based on SSE event field
                                 // Check if this is a message-related event that contains content
@@ -560,7 +565,13 @@
                                     currentEvent === 'values' ||
                                     currentEvent === 'updates' ||
                                     currentEvent === 'message';
-                                console.log('🔍 Is message event?', isMessageEvent, 'Current event:', currentEvent);
+                                console.log('🔍 Is message event?', isMessageEvent, 'Current event:', JSON.stringify(currentEvent));
+                                console.log('🔍 Event comparison details:');
+                                console.log('  - currentEvent === "messages":', currentEvent === 'messages');
+                                console.log('  - currentEvent === "messages/complete":', currentEvent === 'messages/complete');
+                                console.log('  - currentEvent === "messages/metadata":', currentEvent === 'messages/metadata');
+                                console.log('  - currentEvent === "values":', currentEvent === 'values');
+                                console.log('  - currentEvent === "updates":', currentEvent === 'updates');
                                 if (isMessageEvent) {
                                     console.log('🔍 [EVENT PROCESSING] Processing event type:', currentEvent, 'with data:', JSON.stringify(data).substring(0, 200));
                                     const content = extractMessageContent(data);
