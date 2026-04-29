@@ -330,6 +330,7 @@
         let config = null;
         let isStreaming = false;
         let availableAgents = {};
+        let displayedMessageIds = new Set(); // Track displayed message IDs to avoid duplicates
         
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
@@ -529,6 +530,8 @@
                 item.classList.remove('active');
             });
             event.target.classList.add('active');
+            // Clear displayed message IDs when switching threads
+            displayedMessageIds.clear();
             // Load thread history
             try {
                 const response = await fetch(`/api/threads/${threadId}/state`, {
@@ -541,9 +544,9 @@
                 if (state.values && state.values.messages) {
                     state.values.messages.forEach(msg => {
                         if (msg.type === 'human') {
-                            addMessage('user', msg.content);
+                            addMessage('user', msg.content, msg.id);
                         } else if (msg.type === 'ai') {
-                            addMessage('assistant', msg.content);
+                            addMessage('assistant', msg.content, msg.id);
                         }
                     });
                 }
@@ -601,9 +604,10 @@
                 if (typingIndicator) {
                     typingIndicator.remove();
                 }
-                // Create assistant message element
+                // Create assistant message element (will be shown once we have content)
                 const assistantMsg = document.createElement('div');
                 assistantMsg.className = 'message assistant';
+                assistantMsg.style.display = 'none'; // Hide until we have content
                 assistantMsg.innerHTML = '<div class="message-content"></div>';
                 container.appendChild(assistantMsg);
                 const contentEl = assistantMsg.querySelector('.message-content');
@@ -612,6 +616,7 @@
                 const decoder = new TextDecoder();
                 let fullContent = '';
                 let hasReceivedContent = false; // Флаг для предотвращения дублирования
+                let lastMessageId = null; // Track the last message ID to avoid duplicates
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
@@ -658,10 +663,11 @@
                                     console.log('✅ [EVENT PROCESSING] Current fullContent before update:', fullContent);
                                     if (content) {
                                         console.log('✅ [EVENT PROCESSING] Appending content to fullContent');
-                                        fullContent += content;
+                                        fullContent += (fullContent ? '\n\n---\n\n' : '') + content;
                                         hasReceivedContent = true; // Помечаем, что контент уже получен
                                         console.log('✅ [EVENT PROCESSING] New fullContent:', fullContent.substring(0, 150));
                                         contentEl.textContent = fullContent;
+                                        assistantMsg.style.display = 'block'; // Show the message element now that we have content
                                         container.scrollTop = container.scrollHeight;
                                     } else {
                                         console.log('⚠️ [EVENT PROCESSING] Content is NULL/empty, not updating UI');
@@ -683,8 +689,14 @@
                 if (!fullContent) {
                     console.log('⚠️ [FINAL CHECK] No content was extracted, showing fallback message');
                     contentEl.textContent = 'Response received.';
+                    assistantMsg.style.display = 'block';
                 } else {
                     console.log('✅ [FINAL CHECK] Content was successfully extracted and displayed');
+                    // Extract and track the message ID from the last event to prevent duplicates
+                    if (lastMessageId) {
+                        displayedMessageIds.add(lastMessageId);
+                        console.log('✅ Tracked final message ID:', lastMessageId);
+                    }
                 }
             } catch (error) {
                 console.error('Error streaming message:', error);
@@ -719,6 +731,11 @@
                         if (msg.content && (msg.type === 'ai')) {
                             const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
                             console.log('✅ [STEP 3] Found AI message content:', content.substring(0, 100));
+                            // Track message ID to prevent duplicates
+                            if (msg.id) {
+                                lastMessageId = msg.id;
+                                console.log('🆔 Tracking message ID:', msg.id);
+                            }
                             return content;
                         } else {
                             console.log('❌ [STEP 2] Skipping message - content:', !!msg.content, 'type:', msg?.type);
@@ -750,6 +767,11 @@
                         
                         if (msg.content && (msg.type === 'ai')) {
                             console.log('✅ [STEP 3] Found NEW AI message content in messages array');
+                            // Track message ID to prevent duplicates
+                            if (msg.id) {
+                                lastMessageId = msg.id;
+                                console.log('🆔 Tracking message ID:', msg.id);
+                            }
                             return typeof msg.content === 'string' 
                                 ? msg.content 
                                 : JSON.stringify(msg.content);
@@ -875,13 +897,25 @@
                 return String(data);
             }
         }
-        function addMessage(role, content) {
+        function addMessage(role, content, messageId = null) {
+            // Skip if this message ID was already displayed (prevent duplicates)
+            if (messageId && displayedMessageIds.has(messageId)) {
+                console.log('⚠️ Skipping duplicate message with ID:', messageId);
+                return;
+            }
+            
             const container = document.getElementById('messagesContainer');
             const msgEl = document.createElement('div');
             msgEl.className = `message ${role}`;
             msgEl.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
             container.appendChild(msgEl);
             container.scrollTop = container.scrollHeight;
+            
+            // Track this message ID as displayed
+            if (messageId) {
+                displayedMessageIds.add(messageId);
+                console.log('✅ Added message with ID:', messageId, 'Total tracked:', displayedMessageIds.size);
+            }
         }
         function escapeHtml(text) {
             const div = document.createElement('div');
