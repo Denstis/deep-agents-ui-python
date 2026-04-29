@@ -67,8 +67,17 @@ def get_lmstudio_url() -> str:
     return os.getenv("LMSTUDIO_URL", "http://localhost:1234")
 
 
-def call_llm_sync(messages: list, system_prompt: str = "") -> str:
-    """Call LM Studio API synchronously."""
+def call_llm_sync(messages: list, system_prompt: str = "", tools: list = None) -> str:
+    """Call LM Studio API synchronously.
+    
+    Args:
+        messages: List of message objects
+        system_prompt: System prompt to use
+        tools: Optional list of tools for function calling
+        
+    Returns:
+        Response text from the LLM
+    """
     lmstudio_url = get_lmstudio_url()
     
     formatted_messages = []
@@ -85,15 +94,37 @@ def call_llm_sync(messages: list, system_prompt: str = "") -> str:
         else:
             formatted_messages.append({"role": "user", "content": str(msg)})
     
+    payload = {
+        "messages": formatted_messages,
+        "temperature": 0.7,
+        "max_tokens": 2048,
+    }
+    
+    # Add tool definitions if provided
+    if tools:
+        try:
+            from langchain_core.tools import tool
+            tool_defs = []
+            for t in tools:
+                if hasattr(t, 'name') and hasattr(t, 'description') and hasattr(t, 'args_schema'):
+                    tool_defs.append({
+                        "type": "function",
+                        "function": {
+                            "name": getattr(t, 'name', str(t)),
+                            "description": getattr(t, 'description', ''),
+                        }
+                    })
+            if tool_defs:
+                payload["tools"] = tool_defs
+                payload["tool_choice"] = "auto"
+        except Exception:
+            pass  # Tools not supported or failed to convert
+    
     try:
         with httpx.Client(timeout=120.0) as client:
             response = client.post(
                 f"{lmstudio_url}/v1/chat/completions",
-                json={
-                    "messages": formatted_messages,
-                    "temperature": 0.7,
-                    "max_tokens": 2048,
-                },
+                json=payload,
             )
             response.raise_for_status()
             data = response.json()
@@ -167,6 +198,9 @@ def create_coding_agent():
     from app.tools.filesystem import read_file, write_file, list_directory
     from app.tools.pip_tools import install_package, list_packages
     
+    # Define tools
+    coding_tools = [execute_python, execute_python_in_subprocess, read_file, write_file, list_directory, install_package, list_packages]
+    
     class CodingAgentState(TypedDict):
         messages: Annotated[Sequence[BaseMessage], add_messages]
         code_history: list[str]
@@ -194,15 +228,20 @@ Guidelines:
 5. Document your code with docstrings
 6. Use type hints where appropriate
 
-Before executing code, explain what it does and any potential risks."""
+Before executing code, explain what it does and any potential risks.
+
+IMPORTANT: When you need to perform an action, use the available tools by generating tool calls."""
         
-        response = call_llm_sync(state["messages"], system_prompt)
+        response = call_llm_sync(state["messages"], system_prompt, tools=coding_tools)
         return {"messages": [AIMessage(content=response)]}
     
+    # Build graph with ToolNode
     workflow = StateGraph(CodingAgentState)
     workflow.add_node("coder", coding_node)
+    workflow.add_node("tools", ToolNode(coding_tools))
     workflow.add_edge(START, "coder")
-    workflow.add_edge("coder", END)
+    workflow.add_edge("coder", "tools")
+    workflow.add_edge("tools", END)
     
     return workflow.compile()
 
@@ -215,7 +254,10 @@ def create_system_agent():
     """Create a system agent for command line operations."""
     from app.tools.command_line import execute_command, run_python_script
     from app.tools.network import ping_host, port_scan, get_network_info
-    from app.tools.filesystem import list_directory, file_exists, get_file_info
+    from app.tools.filesystem import list_directory, file_exists, get_file_info, write_file
+    
+    # Define tools
+    system_tools = [execute_command, run_python_script, ping_host, port_scan, get_network_info, list_directory, file_exists, get_file_info, write_file]
     
     class SystemAgentState(TypedDict):
         messages: Annotated[Sequence[BaseMessage], add_messages]
@@ -235,6 +277,7 @@ Available tools:
 - list_directory: List directory contents
 - file_exists: Check if file exists
 - get_file_info: Get file metadata
+- write_file: Create files
 
 Security Guidelines:
 1. NEVER execute destructive commands (rm -rf, format, etc.)
@@ -243,15 +286,20 @@ Security Guidelines:
 4. Warn about potentially dangerous operations
 5. Respect system boundaries and permissions
 
-Provide clear explanations of command outputs and their implications."""
+Provide clear explanations of command outputs and their implications.
+
+IMPORTANT: When you need to perform an action, use the available tools by generating tool calls."""
         
-        response = call_llm_sync(state["messages"], system_prompt)
+        response = call_llm_sync(state["messages"], system_prompt, tools=system_tools)
         return {"messages": [AIMessage(content=response)]}
     
+    # Build graph with ToolNode
     workflow = StateGraph(SystemAgentState)
     workflow.add_node("sysadmin", system_node)
+    workflow.add_node("tools", ToolNode(system_tools))
     workflow.add_edge(START, "sysadmin")
-    workflow.add_edge("sysadmin", END)
+    workflow.add_edge("sysadmin", "tools")
+    workflow.add_edge("tools", END)
     
     return workflow.compile()
 
